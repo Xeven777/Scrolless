@@ -1,0 +1,214 @@
+/*
+ * Copyright (C) 2026 Scrolless
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package com.scrolless.app.core.data.repository
+
+import com.scrolless.app.core.data.database.dao.UserSettingsDao
+import com.scrolless.app.core.model.ThemeMode
+import com.scrolless.app.core.repository.UserSettingsStore
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+
+/**
+ * A data repository implementation for [UserSettingsStore].
+ */
+class UserSettingsStoreImpl @Inject constructor(private val userSettingsDao: UserSettingsDao) : UserSettingsStore {
+
+    private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    // Wait for the saved preference before allowing the overlay to appear.
+    private val _timerOverlayEnabled = MutableStateFlow(false)
+    private val _timerOverlayPositionY = MutableStateFlow(0)
+    private val _timerOverlayPositionX = MutableStateFlow(0)
+    private val _waitingForAccessibility = MutableStateFlow(false)
+    private val _hasSeenAccessibilityExplainer = MutableStateFlow(false)
+    private val _hasSeenReviewPrompt = MutableStateFlow(false)
+    private val _reviewPromptAttemptCount = MutableStateFlow(0)
+    private val _reviewPromptLastAttemptAt = MutableStateFlow(0L)
+    private val _pauseUntil = MutableStateFlow(0L)
+    private val _firstLaunchAt = MutableStateFlow(-1L)
+    private val _pauseDuration = MutableStateFlow(5 * 60 * 1000L)
+    private val _includeStories = MutableStateFlow(false)
+    private val _allowVideosSentByDm = MutableStateFlow(false)
+    private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
+    private val _dynamicColorEnabled = MutableStateFlow(true)
+
+    init {
+        coroutineScope.launch {
+            userSettingsDao.getIncludeStories().collect { _includeStories.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getFirstLaunchAt().collect { _firstLaunchAt.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getHasSeenReviewPrompt().collect { _hasSeenReviewPrompt.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getReviewPromptAttemptCount().collect { _reviewPromptAttemptCount.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getReviewPromptLastAttemptAt().collect { _reviewPromptLastAttemptAt.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getTimerOverlayEnabled().collect { _timerOverlayEnabled.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getTimerOverlayPositionY().collect { _timerOverlayPositionY.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getTimerOverlayPositionX().collect { _timerOverlayPositionX.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getWaitingForAccessibility().collect { _waitingForAccessibility.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getHasSeenAccessibilityExplainer().collect { _hasSeenAccessibilityExplainer.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getPauseUntil().collect { _pauseUntil.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getPauseDuration().collect { _pauseDuration.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getAllowVideosSentByDm().collect { _allowVideosSentByDm.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getThemeMode().collect { _themeMode.value = it }
+        }
+        coroutineScope.launch {
+            userSettingsDao.getDynamicColorEnabled().collect { _dynamicColorEnabled.value = it }
+        }
+    }
+
+    override suspend fun setTimerOverlayToggle(enabled: Boolean) {
+        _timerOverlayEnabled.value = enabled
+        userSettingsDao.setTimerOverlayEnabled(enabled)
+    }
+
+    override fun getTimerOverlayEnabled(): Flow<Boolean> = _timerOverlayEnabled
+
+    override fun getTimerOverlayPositionY(): StateFlow<Int> = _timerOverlayPositionY
+
+    override suspend fun setTimerOverlayPositionY(positionY: Int) {
+        _timerOverlayPositionY.value = positionY
+        userSettingsDao.setTimerOverlayPositionY(positionY)
+    }
+
+    override fun getTimerOverlayPositionX(): StateFlow<Int> = _timerOverlayPositionX
+
+    override suspend fun setTimerOverlayPositionX(positionX: Int) {
+        _timerOverlayPositionX.value = positionX
+        userSettingsDao.setTimerOverlayPositionX(positionX)
+    }
+
+    override fun getWaitingForAccessibility(): Flow<Boolean> = _waitingForAccessibility
+
+    override suspend fun setWaitingForAccessibility(waiting: Boolean) {
+        _waitingForAccessibility.value = waiting
+        userSettingsDao.setWaitingForAccessibility(waiting)
+    }
+
+    override fun getHasSeenAccessibilityExplainer(): Flow<Boolean> = _hasSeenAccessibilityExplainer
+
+    override suspend fun setHasSeenAccessibilityExplainer(seen: Boolean) {
+        _hasSeenAccessibilityExplainer.value = seen
+        userSettingsDao.setHasSeenAccessibilityExplainer(seen)
+    }
+
+    override fun getPauseUntil(): Flow<Long> = _pauseUntil
+
+    override suspend fun setPauseUntil(pauseUntil: Long) {
+        _pauseUntil.value = pauseUntil
+        userSettingsDao.setPauseUntil(pauseUntil)
+    }
+
+    override fun getPauseDuration(): Flow<Long> = _pauseDuration
+
+    override suspend fun setPauseDuration(durationMillis: Long) {
+        _pauseDuration.value = durationMillis
+        userSettingsDao.setPauseDuration(durationMillis)
+    }
+
+    override fun getAllowVideosSentByDm(): Flow<Boolean> = _allowVideosSentByDm
+
+    override suspend fun setAllowVideosSentByDm(checked: Boolean) {
+        _allowVideosSentByDm.value = checked
+        userSettingsDao.setAllowVideosSentByDm(checked)
+    }
+
+    override fun getIncludeStories(): Flow<Boolean> = _includeStories
+
+    override suspend fun setIncludeStories(enabled: Boolean) {
+        _includeStories.value = enabled
+        userSettingsDao.setIncludeStories(enabled)
+    }
+
+    override fun getFirstLaunchAt(): Flow<Long> = _firstLaunchAt
+
+    override fun getFirstLaunchDate(): Flow<LocalDate?> = _firstLaunchAt.map { firstLaunchAt ->
+        if (firstLaunchAt > 0L) {
+            Instant.ofEpochMilli(firstLaunchAt).atZone(ZoneId.systemDefault()).toLocalDate()
+        } else {
+            null
+        }
+    }
+
+    override fun getHasSeenReviewPrompt(): Flow<Boolean> = _hasSeenReviewPrompt
+
+    override suspend fun setHasSeenReviewPrompt(seen: Boolean) {
+        _hasSeenReviewPrompt.value = seen
+        userSettingsDao.setHasSeenReviewPrompt(seen)
+    }
+
+    override fun getReviewPromptAttemptCount(): Flow<Int> = _reviewPromptAttemptCount
+
+    override suspend fun setReviewPromptAttemptCount(count: Int) {
+        _reviewPromptAttemptCount.value = count
+        userSettingsDao.setReviewPromptAttemptCount(count)
+    }
+
+    override fun getReviewPromptLastAttemptAt(): Flow<Long> = _reviewPromptLastAttemptAt
+
+    override suspend fun setReviewPromptLastAttemptAt(timestamp: Long) {
+        _reviewPromptLastAttemptAt.value = timestamp
+        userSettingsDao.setReviewPromptLastAttemptAt(timestamp)
+    }
+
+    override fun getThemeMode(): Flow<ThemeMode> = _themeMode
+
+    override suspend fun setThemeMode(mode: ThemeMode) {
+        _themeMode.value = mode
+        userSettingsDao.setThemeMode(mode)
+    }
+
+    override fun getDynamicColorEnabled(): Flow<Boolean> = _dynamicColorEnabled
+
+    override suspend fun setDynamicColorEnabled(enabled: Boolean) {
+        _dynamicColorEnabled.value = enabled
+        userSettingsDao.setDynamicColorEnabled(enabled)
+    }
+}

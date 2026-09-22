@@ -1,0 +1,83 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test_and_apk:
+    name: "Local tests and APKs"
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      security-events: write
+
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/gradle-ci.properties ~/.gradle/gradle.properties
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-encryption-key: ${{ secrets.GRADLEENCRYPTIONKEY }}
+          build-scan-publish: true
+          build-scan-terms-of-use-url: "https://gradle.com/terms-of-service"
+          build-scan-terms-of-use-agree: "yes"
+
+      - name: Check spotless
+        run: ./gradlew spotlessCheck
+
+      # Run local tests
+      - name: Run local tests
+        run: ./gradlew test
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Upload build outputs (APKs)
+        uses: actions/upload-artifact@v7
+        with:
+          name: APKs
+          path: '**/build/outputs/apk/**/*.apk'
+
+      - name: Upload JVM local results (XML)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: local-test-results
+          path: '**/build/test-results/test*UnitTest/**.xml'
+
+      - name: Check lint
+        run: ./gradlew :app:lintDebug
+
+      - name: Upload lint reports (HTML)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: lint-reports
+          path: 'app/build/reports/lint-results-*.html'
+
+      - name: Upload lint reports (SARIF)
+        if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: './'

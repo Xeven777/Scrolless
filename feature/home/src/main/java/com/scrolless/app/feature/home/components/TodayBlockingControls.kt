@@ -1,0 +1,816 @@
+/*
+ * Copyright (C) 2026 Scrolless
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package com.scrolless.app.feature.home.components
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroup
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonColors
+import androidx.compose.material3.ToggleButtonShapes
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.scrolless.app.core.model.BlockOption
+import com.scrolless.app.core.model.BlockingSettings
+import com.scrolless.app.designsystem.component.AutoResizingText
+import com.scrolless.app.designsystem.component.ScrollessCard
+import com.scrolless.app.designsystem.icon.ScrollessIcons
+import com.scrolless.app.designsystem.theme.ScrollessTheme
+import com.scrolless.app.designsystem.theme.spacing
+import com.scrolless.app.designsystem.tooling.DevicePreviews
+import com.scrolless.app.designsystem.util.rememberHapticHelper
+import com.scrolless.app.designsystem.util.toCountdownLabel
+import com.scrolless.app.designsystem.util.toIntervalLabel
+import com.scrolless.app.feature.home.HomeUiState
+import com.scrolless.app.feature.home.R
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.delay
+import timber.log.Timber
+
+enum class BlockingButtonType { BLOCK_ALL, DAILY_LIMIT, INTERVAL }
+
+/**
+ * Which flourish plays when a feature button becomes selected.
+ *
+ * Declared explicitly rather than inferred from the icon's resource id: comparing
+ * drawable ids inside a composable couples the animation to which asset happens to be
+ * wired up, and silently stops animating when an icon is swapped.
+ */
+enum class FeatureButtonSelectionMotion {
+    /** Spins a quarter turn, like winding a dial. */
+    ROTATE,
+
+    /** Rocks side to side, like a ticking stopwatch. */
+    WOBBLE,
+
+    /** Pops larger, like a stamp. */
+    POP,
+}
+
+@Composable
+fun TodayBlockingControls(
+    uiState: HomeUiState,
+    isBlockingActive: Boolean,
+    isPauseActive: Boolean,
+    pauseRemainingMillis: Long,
+    onBlockOptionSelected: (BlockOption) -> Unit,
+    onConfigureDailyLimit: () -> Unit,
+    onIntervalTimerClick: () -> Unit,
+    onIntervalTimerEdit: () -> Unit,
+    onPauseToggle: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val weightBase = 1.0f
+    val weightExpanded = 1.15f
+    val weightShrunk = 0.65f
+    val releaseDelay = 160L
+    val motionScheme = MaterialTheme.motionScheme
+    val pressAnimationSpec = motionScheme.fastSpatialSpec<Float>()
+
+    var lastClicked by remember { mutableStateOf<BlockingButtonType?>(null) }
+    val hapticFeedback = rememberHapticHelper()
+
+    // Auto-releases the button expansion animation after releaseDelay
+    LaunchedEffect(lastClicked) {
+        if (lastClicked != null) {
+            delay(releaseDelay.milliseconds)
+            lastClicked = null
+        }
+    }
+
+    // 1. Define interaction sources for ALL buttons
+    val blockAllInteractionSource = remember { MutableInteractionSource() }
+    val dailyLimitInteractionSource = remember { MutableInteractionSource() }
+    val intervalInteractionSource = remember { MutableInteractionSource() }
+
+    val isBlockAllPressed by blockAllInteractionSource.collectIsPressedAsState()
+    val isDailyLimitPressed by dailyLimitInteractionSource.collectIsPressedAsState()
+    val isIntervalPressed by intervalInteractionSource.collectIsPressedAsState()
+
+    // Helper to evaluate target weight based on click/press states
+    fun isPressedOrClicked(button: BlockingButtonType): Boolean = when (button) {
+        BlockingButtonType.BLOCK_ALL -> isBlockAllPressed || lastClicked == BlockingButtonType.BLOCK_ALL
+        BlockingButtonType.DAILY_LIMIT -> isDailyLimitPressed || lastClicked == BlockingButtonType.DAILY_LIMIT
+        BlockingButtonType.INTERVAL -> isIntervalPressed || lastClicked == BlockingButtonType.INTERVAL
+    }
+
+    fun weightFor(button: BlockingButtonType): Float = when {
+        isPressedOrClicked(button) -> weightExpanded
+        BlockingButtonType.entries.any { isPressedOrClicked(it) } -> weightShrunk
+        else -> weightBase
+    }
+
+    // 2. Calculate Animated Weights (Float) based on interaction and click states
+    val blockAllWeight by animateFloatAsState(
+        targetValue = weightFor(BlockingButtonType.BLOCK_ALL),
+        animationSpec = pressAnimationSpec, label = "blockAllWeight",
+    )
+
+    val dailyLimitWeight by animateFloatAsState(
+        targetValue = weightFor(BlockingButtonType.DAILY_LIMIT),
+        animationSpec = pressAnimationSpec, label = "dailyLimitWeight",
+    )
+
+    val intervalWeight by animateFloatAsState(
+        targetValue = weightFor(BlockingButtonType.INTERVAL),
+        animationSpec = pressAnimationSpec, label = "intervalWeight",
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = motionScheme.defaultSpatialSpec()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        FeatureButtonsRow(
+            selectedOption = uiState.blockOption,
+            onBlockAllClick = {
+                lastClicked = BlockingButtonType.BLOCK_ALL
+                val isSelected = uiState.blockOption == BlockOption.BlockAll
+                hapticFeedback.playToggle(!isSelected)
+                val newOption = if (isSelected) {
+                    BlockOption.NothingSelected
+                } else {
+                    BlockOption.BlockAll
+                }
+                Timber.i("BlockAll clicked -> newOption=%s (prev=%s)", newOption, uiState.blockOption)
+                onBlockOptionSelected(newOption)
+            },
+            onDailyLimitClick = {
+                lastClicked = BlockingButtonType.DAILY_LIMIT
+                val isSelected = uiState.blockOption == BlockOption.DailyLimit
+                hapticFeedback.playToggle(!isSelected)
+                if (uiState.settings.dailyLimitMillis == 0L && !isSelected) {
+                    Timber.d("DailyLimit clicked -> open TimeLimitDialog (no limit set)")
+                    onConfigureDailyLimit()
+                } else {
+                    val newOption = if (isSelected) {
+                        BlockOption.NothingSelected
+                    } else {
+                        BlockOption.DailyLimit
+                    }
+                    Timber.i("DailyLimit clicked -> newOption=%s (prev=%s)", newOption, uiState.blockOption)
+                    onBlockOptionSelected(newOption)
+                }
+            },
+            onIntervalTimerClick = {
+                lastClicked = BlockingButtonType.INTERVAL
+                val isSelected = uiState.blockOption == BlockOption.IntervalTimer
+                hapticFeedback.playToggle(!isSelected)
+                Timber.i("IntervalTimer clicked from feature row")
+                onIntervalTimerClick()
+            },
+            blockAllInteractionSource = blockAllInteractionSource,
+            dailyLimitInteractionSource = dailyLimitInteractionSource,
+            intervalInteractionSource = intervalInteractionSource,
+            blockAllAnimatedWeight = blockAllWeight,
+            dailyLimitAnimatedWeight = dailyLimitWeight,
+            intervalAnimatedWeight = intervalWeight,
+        )
+
+        AnimatedVisibility(
+            visible = uiState.blockOption == BlockOption.DailyLimit,
+            enter = expandVertically(
+                expandFrom = Alignment.Top,
+                animationSpec = tween(300),
+            ) + fadeIn(animationSpec = tween(200)),
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top,
+                animationSpec = tween(300),
+            ) + fadeOut(animationSpec = tween(200)),
+        ) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                ConfigButton(
+                    onClick = {
+                        Timber.d("Open DailyLimit config button clicked")
+                        onConfigureDailyLimit()
+                    },
+                    dailyLimitInteractionSource = dailyLimitInteractionSource,
+                    blockAllInteractionSource = blockAllInteractionSource,
+                    modifier = Modifier.fillMaxWidth(0.2f),
+                )
+            }
+        }
+
+        if (uiState.blockOption == BlockOption.IntervalTimer) {
+            Spacer(
+                modifier = Modifier.height(MaterialTheme.spacing.small),
+            )
+        }
+
+        AnimatedVisibility(
+            visible = uiState.blockOption == BlockOption.IntervalTimer,
+            enter = expandVertically(
+                expandFrom = Alignment.Top,
+                animationSpec = tween(300),
+            ) + fadeIn(animationSpec = tween(200)),
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top,
+                animationSpec = tween(300),
+            ) + fadeOut(animationSpec = tween(200)),
+        ) {
+            IntervalTimerSettingsCard(
+                intervalLengthMillis = uiState.settings.intervalLengthMillis,
+                allowanceMillis = uiState.settings.intervalAllowanceMillis,
+                onEditClick = onIntervalTimerEdit,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        if (uiState.blockOption == BlockOption.IntervalTimer) {
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.extraLarge))
+        }
+
+        AnimatedVisibility(
+            visible = isBlockingActive || isPauseActive,
+            enter = expandVertically(
+                expandFrom = Alignment.Top,
+                animationSpec = tween(300),
+            ) + fadeIn(animationSpec = tween(200)),
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top,
+                animationSpec = tween(300),
+            ) + fadeOut(animationSpec = tween(200)),
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.extraLarge))
+
+                PauseButton(
+                    onTogglePause = onPauseToggle,
+                    isPaused = isPauseActive,
+                    remainingMillis = pauseRemainingMillis,
+                    pauseDurationMinutes = (uiState.pauseDurationMillis / 60_000L).toInt().coerceAtLeast(1),
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(MaterialTheme.spacing.extraLarge))
+    }
+}
+
+@Composable
+fun ConfigButton(
+    onClick: () -> Unit,
+    dailyLimitInteractionSource: MutableInteractionSource,
+    blockAllInteractionSource: MutableInteractionSource,
+    modifier: Modifier = Modifier,
+) {
+    // Collect pressed state from both sources
+    val isDailyLimitPressed by dailyLimitInteractionSource.collectIsPressedAsState()
+    val isBlockAllPressed by blockAllInteractionSource.collectIsPressedAsState()
+
+    // Wiggle if EITHER linked button is actively pressed
+    val isPressed = isDailyLimitPressed || isBlockAllPressed
+
+    val motionScheme = MaterialTheme.motionScheme
+    val animationSpec = motionScheme.fastSpatialSpec<Float>()
+    val colorAnimationSpec = motionScheme.fastEffectsSpec<Color>()
+
+    val bottomCorner by animateFloatAsState(
+        targetValue = if (isPressed) 24f else 16f,
+        animationSpec = animationSpec,
+        label = "configButtonCorner",
+    )
+
+    // Tonal shift on press rather than an alpha fade — an alpha-blended surface over the
+    // gradient background made contrast depend on whatever was behind it.
+    val baseColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    val pressedColor = MaterialTheme.colorScheme.surfaceContainerHigh
+
+    val containerColor by animateColorAsState(
+        targetValue = if (isPressed) pressedColor else baseColor,
+        animationSpec = colorAnimationSpec,
+        label = "configButtonColor",
+    )
+
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.height(48.dp),
+        // Use internal source to prevent default press overlay, since we handle styling externally
+        interactionSource = remember { MutableInteractionSource() },
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = containerColor,
+        ),
+        shape = RoundedCornerShape(0.dp, 0.dp, bottomCorner.dp, bottomCorner.dp),
+    ) {
+        Icon(
+            painter = painterResource(id = ScrollessIcons.Tune),
+            contentDescription = stringResource(id = R.string.daily_limit_configure_time_content_description),
+            modifier = Modifier.size(24.dp),
+        )
+    }
+}
+
+@Composable
+fun IntervalTimerSettingsCard(intervalLengthMillis: Long, allowanceMillis: Long, onEditClick: () -> Unit, modifier: Modifier = Modifier) {
+    val hasSchedule = intervalLengthMillis > 0 && allowanceMillis > 0
+    val allowanceLabel = if (hasSchedule) allowanceMillis.toIntervalLabel() else "--"
+    val breakLabel = if (hasSchedule) intervalLengthMillis.toIntervalLabel() else "--"
+    val actionLabel = if (hasSchedule) {
+        stringResource(R.string.interval_timer_card_edit)
+    } else {
+        stringResource(R.string.interval_timer_card_set_schedule)
+    }
+
+    ScrollessCard(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = MaterialTheme.spacing.large + 4.dp, vertical = MaterialTheme.spacing.extraLarge),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.large),
+        ) {
+            Text(
+                text = if (hasSchedule) {
+                    stringResource(
+                        R.string.interval_timer_card_summary,
+                        allowanceLabel,
+                        breakLabel,
+                    )
+                } else {
+                    stringResource(R.string.interval_timer_card_summary_empty)
+                },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IntervalValueChip(
+                    label = stringResource(R.string.interval_timer_card_allowance_chip),
+                    value = allowanceLabel,
+                    modifier = Modifier.weight(1f),
+                )
+                IntervalValueChip(
+                    label = stringResource(R.string.interval_timer_card_break_chip),
+                    value = breakLabel,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
+            Button(
+                onClick = onEditClick,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            ) {
+                Text(text = actionLabel)
+            }
+        }
+    }
+}
+
+@Composable
+private fun IntervalValueChip(label: String, value: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = MaterialTheme.spacing.large, vertical = MaterialTheme.spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraSmall),
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    }
+}
+
+@Composable
+fun PauseButton(
+    modifier: Modifier = Modifier,
+    onTogglePause: (Boolean) -> Unit,
+    isPaused: Boolean,
+    remainingMillis: Long,
+    pauseDurationMinutes: Int = 5,
+) {
+
+    val hapticHelper = rememberHapticHelper()
+
+    val buttonShape = MaterialTheme.shapes.extraLarge
+    val effectsSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Color>()
+    val containerColor by animateColorAsState(
+        targetValue = if (isPaused) {
+            MaterialTheme.colorScheme.errorContainer
+        } else {
+            MaterialTheme.colorScheme.primaryContainer
+        },
+        animationSpec = effectsSpec,
+        label = "pauseButtonContainer",
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (isPaused) {
+            MaterialTheme.colorScheme.onErrorContainer
+        } else {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        },
+        animationSpec = effectsSpec,
+        label = "pauseButtonContent",
+    )
+
+    val borderColor by animateColorAsState(
+        targetValue = if (isPaused) {
+            MaterialTheme.colorScheme.error
+        } else {
+            MaterialTheme.colorScheme.primary
+        },
+        animationSpec = effectsSpec,
+        label = "pauseButtonBorder",
+    )
+
+    val iconRes = if (isPaused) ScrollessIcons.PlayArrow else ScrollessIcons.Pause
+    val buttonLabel = if (isPaused) {
+        stringResource(id = R.string.resume)
+    } else {
+        stringResource(id = R.string.pause)
+    }
+
+    Column(
+        modifier = modifier.wrapContentWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Button(
+            onClick = {
+                hapticHelper.playToggle(isPaused)
+                onTogglePause(!isPaused)
+            },
+            shape = buttonShape,
+            border = BorderStroke(1.dp, borderColor),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = containerColor,
+                contentColor = contentColor,
+            ),
+            modifier = Modifier.height(64.dp),
+        ) {
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = buttonLabel,
+                tint = contentColor,
+                modifier = Modifier.size(24.dp),
+            )
+            Spacer(modifier = Modifier.width(MaterialTheme.spacing.medium))
+            Text(
+                text = buttonLabel,
+                style = MaterialTheme.typography.titleMedium,
+            )
+        }
+
+        AnimatedContent(
+            targetState = isPaused,
+            modifier = Modifier.padding(top = 8.dp),
+            label = "pauseButtonSupportingText",
+        ) { paused ->
+            val text = if (paused) {
+                stringResource(id = R.string.pause_resumes_in, remainingMillis.toCountdownLabel())
+            } else {
+                stringResource(id = R.string.pause_duration_hint, pauseDurationMinutes)
+            }
+            Text(
+                text = text,
+                color = if (paused) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun FeatureButtonsRow(
+    selectedOption: BlockOption,
+    onBlockAllClick: () -> Unit,
+    onDailyLimitClick: () -> Unit,
+    onIntervalTimerClick: () -> Unit,
+    blockAllInteractionSource: MutableInteractionSource,
+    dailyLimitInteractionSource: MutableInteractionSource,
+    intervalInteractionSource: MutableInteractionSource,
+    blockAllAnimatedWeight: Float,
+    dailyLimitAnimatedWeight: Float,
+    intervalAnimatedWeight: Float,
+    modifier: Modifier = Modifier,
+) {
+    ButtonGroup(
+        overflowIndicator = {},
+        modifier = modifier
+            .fillMaxWidth()
+            .height(128.dp),
+    ) {
+        customItem(
+            buttonGroupContent = {
+                FeatureButton(
+                    onClick = onBlockAllClick,
+                    icon = ScrollessIcons.Block,
+                    selectionMotion = FeatureButtonSelectionMotion.POP,
+                    text = stringResource(id = R.string.block_all),
+                    contentDescription = stringResource(id = R.string.block_all),
+                    isSelected = selectedOption == BlockOption.BlockAll,
+                    interactionSource = blockAllInteractionSource,
+                    modifier = Modifier.weight(blockAllAnimatedWeight),
+                )
+            },
+            menuContent = {},
+        )
+
+        customItem(
+            buttonGroupContent = {
+                FeatureButton(
+                    onClick = onDailyLimitClick,
+                    icon = ScrollessIcons.Timer,
+                    selectionMotion = FeatureButtonSelectionMotion.ROTATE,
+                    text = stringResource(id = R.string.daily_limit),
+                    contentDescription = stringResource(id = R.string.daily_limit),
+                    isSelected = selectedOption == BlockOption.DailyLimit,
+                    interactionSource = dailyLimitInteractionSource,
+                    modifier = Modifier.weight(dailyLimitAnimatedWeight),
+                )
+            },
+            menuContent = {},
+        )
+
+        customItem(
+            buttonGroupContent = {
+                Box(
+                    modifier = Modifier
+                        .weight(intervalAnimatedWeight)
+                        .fillMaxSize(),
+                ) {
+                    FeatureButton(
+                        onClick = onIntervalTimerClick,
+                        icon = ScrollessIcons.Schedule,
+                        selectionMotion = FeatureButtonSelectionMotion.WOBBLE,
+                        text = stringResource(id = R.string.time_interval),
+                        contentDescription = stringResource(id = R.string.time_interval),
+                        isSelected = selectedOption == BlockOption.IntervalTimer,
+                        interactionSource = intervalInteractionSource,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+
+                    if (selectedOption == BlockOption.IntervalTimer) {
+                        IntervalTimerPointer(
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .offset(y = 10.dp, x = (-10).dp),
+                        )
+                    }
+                }
+            },
+            menuContent = {},
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun FeatureButton(
+    onClick: () -> Unit,
+    icon: Int,
+    text: String,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+    selectionMotion: FeatureButtonSelectionMotion = FeatureButtonSelectionMotion.POP,
+    isSelected: Boolean = false,
+    isEnabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+) {
+    val finalModifier = if (!isEnabled) modifier.alpha(0.7f) else modifier
+
+    val iconRotation = remember { Animatable(0f) }
+    val iconScale = remember { Animatable(1f) }
+    val motionScheme = MaterialTheme.motionScheme
+
+    LaunchedEffect(isSelected, selectionMotion) {
+        if (isSelected) {
+            when (selectionMotion) {
+                FeatureButtonSelectionMotion.ROTATE -> {
+                    iconRotation.snapTo(0f)
+                    iconRotation.animateTo(
+                        targetValue = 45f,
+                        animationSpec = motionScheme.defaultSpatialSpec(),
+                    )
+                }
+
+                FeatureButtonSelectionMotion.WOBBLE -> {
+                    iconRotation.snapTo(0f)
+                    iconRotation.animateTo(15f, motionScheme.fastSpatialSpec())
+                    iconRotation.animateTo(-15f, motionScheme.fastSpatialSpec())
+                    iconRotation.animateTo(8f, motionScheme.defaultSpatialSpec())
+                    iconRotation.animateTo(-8f, motionScheme.defaultSpatialSpec())
+                    iconRotation.animateTo(0f, motionScheme.slowSpatialSpec())
+                }
+
+                FeatureButtonSelectionMotion.POP -> {
+                    iconScale.snapTo(1f)
+                    iconScale.animateTo(1.25f, motionScheme.defaultSpatialSpec())
+                    iconScale.animateTo(1.0f, motionScheme.slowSpatialSpec())
+                }
+            }
+        } else {
+            iconRotation.snapTo(0f)
+            iconScale.snapTo(1f)
+        }
+    }
+
+    ToggleButton(
+        checked = isSelected,
+        onCheckedChange = { onClick() },
+        modifier = finalModifier.fillMaxSize(),
+        enabled = isEnabled,
+        colors = ToggleButtonColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.38f),
+            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+            checkedContainerColor = MaterialTheme.colorScheme.primary,
+            checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+        ),
+        shapes = ToggleButtonShapes(
+            shape = MaterialTheme.shapes.large,
+            pressedShape = MaterialTheme.shapes.extraLarge,
+            checkedShape = MaterialTheme.shapes.extraLarge,
+        ),
+        interactionSource = interactionSource,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            // Icon rather than Image so the glyph follows the toggle's content colour.
+            // A baked-in raster colour is unreadable once the button flips to the
+            // selected (primary container) state.
+            Icon(
+                painter = painterResource(id = icon),
+                contentDescription = contentDescription,
+                modifier = Modifier
+                    .size(32.dp)
+                    .graphicsLayer(
+                        scaleX = iconScale.value,
+                        scaleY = iconScale.value,
+                        rotationZ = iconRotation.value,
+                    ),
+            )
+            AutoResizingText(
+                text = text,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = MaterialTheme.spacing.extraSmall),
+            )
+        }
+    }
+}
+
+@Composable
+private fun IntervalTimerPointer(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(width = 42.dp, height = 16.dp)) {
+        val path = Path().apply {
+            moveTo(0f, 0f)
+            lineTo(size.width, 0f)
+            lineTo(size.width / 2f, size.height)
+            close()
+        }
+        drawPath(path = path, color = color)
+    }
+}
+
+@DevicePreviews
+@Composable
+fun TodayBlockingControlsPreview() {
+    ScrollessTheme(darkTheme = true) {
+        Surface {
+            TodayBlockingControls(
+                uiState = HomeUiState(
+                    blockOption = BlockOption.DailyLimit,
+                    settings = BlockingSettings(dailyLimitMillis = 60 * 60 * 1000L),
+                ),
+                isBlockingActive = false,
+                isPauseActive = false,
+                pauseRemainingMillis = 0L,
+                onBlockOptionSelected = {},
+                onConfigureDailyLimit = {},
+                onIntervalTimerClick = {},
+                onIntervalTimerEdit = {},
+                onPauseToggle = { _ -> },
+            )
+        }
+    }
+}
+
+@DevicePreviews
+@Composable
+fun TodayBlockingIntervalTimerControlsPreview() {
+    ScrollessTheme(darkTheme = true) {
+        Surface {
+            TodayBlockingControls(
+                uiState = HomeUiState(
+                    blockOption = BlockOption.IntervalTimer,
+                    settings = BlockingSettings(
+                        intervalAllowanceMillis = 5 * 60 * 1000L,
+                        intervalLengthMillis = 60 * 60 * 1000L,
+                    ),
+                ),
+                isBlockingActive = false,
+                isPauseActive = true,
+                pauseRemainingMillis = 0L,
+                onBlockOptionSelected = {},
+                onConfigureDailyLimit = {},
+                onIntervalTimerClick = {},
+                onIntervalTimerEdit = {},
+                onPauseToggle = { _ -> },
+            )
+        }
+    }
+}

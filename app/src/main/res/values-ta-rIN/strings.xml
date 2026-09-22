@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2026 Scrolless
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<resources>
+    <string name="accessibility_service_description">ரீல்கள்/ஷார்ட்ஸ்கள்/டிக்டாக் திறக்கப்படும்போது இந்தச் சேவை கண்டறிகிறது, இதனால் Scrolless, கட்டமைக்கப்பட்டால் அவற்றைத் தடுக்க முடியும்.</string>
+    <string name="app_name">Scrolless</string>
+    <string name="tiktok_blocked_title">TikTok வீடியோக்கள் முடக்கப்பட்டுள்ளன</string>
+    <string name="tiktok_blocked_description">இன்பாக்ஸ் அல்லது சுயவிவரத்தைத் திறக்க கீழே உள்ள தாவல்களைப் பயன்படுத்தவும்.</string>
+</resources>

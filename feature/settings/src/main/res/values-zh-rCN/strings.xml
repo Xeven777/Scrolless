@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2026 Scrolless
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<resources>
+    <string name="back">返回</string>
+    <string name="settings">设置</string>
+    <string name="settings_section_blocking">拦截</string>
+    <string name="settings_pause_duration_title">暂停时长</string>
+    <string name="settings_pause_duration_description">点击“暂停”后，拦截功能会暂停多长时间。</string>
+    <plurals name="settings_pause_duration_value">
+        <item quantity="other">%1$d 分钟</item>
+    </plurals>
+    <string name="settings_allow_videos_sent_by_dms_description">不拦截通过私信发送的视频。</string>
+    <string name="settings_allow_videos_sent_by_dms_note">不支持 TikTok Lite</string>
+    <string name="settings_allow_videos_sent_by_dms_title">私信发送的视频</string>
+    <string name="settings_show_onscreen_timer_description">观看短视频内容时，保持浮动计时器可见。</string>
+    <string name="settings_show_onscreen_timer_title">显示屏幕悬浮计时器</string>
+    <string name="settings_include_stories_title">包含快拍</string>
+    <string name="settings_include_stories_description">统计浏览快拍所花的时间，并应用当前的屏蔽模式和时间限制。</string>
+    <string name="settings_include_stories_note">目前支持 Instagram、Snapchat 和 Facebook。</string>
+</resources>

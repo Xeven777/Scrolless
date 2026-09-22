@@ -1,0 +1,73 @@
+/*
+ * Copyright (C) 2026 Scrolless
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package com.scrolless.app.core.data.database.model
+
+import androidx.compose.runtime.Immutable
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.PrimaryKey
+import com.scrolless.app.core.model.BlockOption
+import com.scrolless.app.core.model.BlockingConfig
+import com.scrolless.app.core.model.BlockingSettings
+import com.scrolless.app.core.model.IntervalUsage
+import com.scrolless.app.core.model.ThemeMode
+
+/**
+ * The single row that holds every user setting.
+ */
+@Entity(
+    tableName = "user_settings",
+    indices = [
+        Index("id", unique = true),
+    ],
+)
+@Immutable
+data class UserSettingsEntity(
+    @PrimaryKey @ColumnInfo(name = "id") val id: Int = 1, // Single row for settings
+    @ColumnInfo(name = "active_block_option") val activeBlockOption: BlockOption,
+    @ColumnInfo(name = "daily_limit") val dailyLimit: Long = 0L,
+    @ColumnInfo(name = "interval_allowance") val intervalAllowance: Long = 0L,
+    @ColumnInfo(name = "interval_length") val intervalLength: Long = 0L,
+    @ColumnInfo(name = "interval_window_start_at") val intervalWindowStartAt: Long = 0L,
+    @ColumnInfo(name = "interval_usage") val intervalUsage: Long = 0L,
+    @ColumnInfo(name = "timer_overlay_enabled") val timerOverlayEnabled: Boolean = true,
+    @ColumnInfo(name = "timer_overlay_x") val timerOverlayX: Int = 0,
+    @ColumnInfo(name = "timer_overlay_y") val timerOverlayY: Int = 100,
+    @ColumnInfo(name = "waiting_for_accessibility") val waitingForAccessibility: Boolean = false,
+    @ColumnInfo(name = "has_seen_accessibility_explainer") val hasSeenAccessibilityExplainer: Boolean = false,
+    @ColumnInfo(name = "pause_until_at") val pauseUntilAt: Long = 0L,
+    @ColumnInfo(name = "first_launch_at", defaultValue = "0") val firstLaunchAt: Long = 0L,
+    @ColumnInfo(name = "has_seen_review_prompt", defaultValue = "0") val hasSeenReviewPrompt: Boolean = false,
+    @ColumnInfo(name = "review_prompt_attempt_count", defaultValue = "0") val reviewPromptAttemptCount: Int = 0,
+    @ColumnInfo(name = "review_prompt_last_attempt_at", defaultValue = "0") val reviewPromptLastAttemptAt: Long = 0L,
+    @ColumnInfo(name = "pause_duration_millis", defaultValue = "300000") val pauseDurationMillis: Long = 5 * 60 * 1000L,
+    @ColumnInfo(name = "include_stories", defaultValue = "0") val includeStories: Boolean = false,
+    @ColumnInfo(name = "except_reels_sent_by_dm", defaultValue = "0") val allowVideosSentByDm: Boolean = false,
+    @ColumnInfo(name = "theme_mode", defaultValue = "SYSTEM") val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    @ColumnInfo(name = "dynamic_color_enabled", defaultValue = "1") val dynamicColorEnabled: Boolean = true,
+)
+
+fun UserSettingsEntity.toBlockingConfig(): BlockingConfig = BlockingConfig(
+    activeOption = activeBlockOption,
+    settings = BlockingSettings(
+        dailyLimitMillis = dailyLimit,
+        intervalAllowanceMillis = intervalAllowance,
+        intervalLengthMillis = intervalLength,
+    ),
+    intervalUsage = IntervalUsage(startMillis = intervalWindowStartAt, usageMillis = intervalUsage),
+)

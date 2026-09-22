@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2026 Scrolless
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<resources>
+    <string name="back">Назад</string>
+    <string name="settings">Настройки</string>
+    <string name="settings_section_blocking">Блокировка</string>
+    <string name="settings_pause_duration_title">Длительность паузы</string>
+    <string name="settings_pause_duration_description">Как долго блокировка будет приостановлена после нажатия «Пауза».</string>
+    <plurals name="settings_pause_duration_value">
+        <item quantity="one">%1$d минута</item>
+        <item quantity="few">%1$d минуты</item>
+        <item quantity="many">%1$d минут</item>
+        <item quantity="other">%1$d минут</item>
+    </plurals>
+    <string name="settings_allow_videos_sent_by_dms_description">Не блокировать видео, отправленные в личных сообщениях.</string>
+    <string name="settings_allow_videos_sent_by_dms_note">Не поддерживается в TikTok Lite</string>
+    <string name="settings_allow_videos_sent_by_dms_title">Видео, отправленные в личных сообщениях</string>
+    <string name="settings_show_onscreen_timer_description">Отображать плавающий таймер во время просмотра коротких видео.</string>
+    <string name="settings_show_onscreen_timer_title">Показывать таймер на экране</string>
+    <string name="settings_include_stories_title">Учитывать истории</string>
+    <string name="settings_include_stories_description">Учитывайте время просмотра историй и применяйте текущий режим блокировки и ограничения времени.</string>
+    <string name="settings_include_stories_note">Пока поддерживается в Instagram, Snapchat и Facebook.</string>
+</resources>

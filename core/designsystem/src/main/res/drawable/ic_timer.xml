@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2026 Scrolless
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+      android:fillColor="#FF000000"
+      android:pathData="M9,3L9,1L15,1L15,3L9,3ZM11,14L13,14L13,8L11,8L11,14ZM8.5125,21.2875Q6.875,20.575 5.65,19.35T3.7125,16.4875Q3,14.85 3,13T3.7125,9.5125Q4.425,7.875 5.65,6.65T8.5125,4.7125Q10.15,4 12,4Q13.55,4 14.975,4.5T17.65,5.95L19.05,4.55L20.45,5.95L19.05,7.35Q20,8.6 20.5,10.025T21,13Q21,14.85 20.2875,16.4875T18.35,19.35Q17.125,20.575 15.4875,21.2875T12,22Q10.15,22 8.5125,21.2875ZM16.95,17.95Q19,15.9 19,13T16.95,8.05Q14.9,6 12,6T7.05,8.05Q5,10.1 5,13T7.05,17.95Q9.1,20 12,20T16.95,17.95Z"/>
+</vector>

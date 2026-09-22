@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2026 Scrolless
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<resources>
+    <string name="back">Natrag</string>
+    <string name="settings">Postavke</string>
+    <string name="settings_section_blocking">Blokiranje</string>
+    <string name="settings_pause_duration_title">Trajanje pauze</string>
+    <string name="settings_pause_duration_description">Koliko dugo je blokiranje pauzirano kada dodirnete „Pauziraj”.</string>
+    <plurals name="settings_pause_duration_value">
+        <item quantity="one">%1$d minuta</item>
+        <item quantity="other">%1$d minuta</item>
+        <item quantity="few">%1$d minute</item>
+    </plurals>
+    <string name="settings_allow_videos_sent_by_dms_description">Ne blokiraj videozapise poslane u DM-ovima.</string>
+    <string name="settings_allow_videos_sent_by_dms_note">Nije podržano u aplikaciji TikTok Lite</string>
+    <string name="settings_allow_videos_sent_by_dms_title">Videozapisi poslani u DM-ovima</string>
+    <string name="settings_show_onscreen_timer_description">Zadrži plutajući mjerač vremena vidljivim dok gledaš kratke videozapise.</string>
+    <string name="settings_show_onscreen_timer_title">Prikaži mjerač vremena na zaslonu</string>
+    <string name="settings_include_stories_title">Uključi priče</string>
+    <string name="settings_include_stories_description">Broji vrijeme provedeno gledajući priče i primijeni trenutačni način blokiranja i ograničenja.</string>
+    <string name="settings_include_stories_note">Trenutačno podržano na Instagramu, Snapchatu i Facebooku.</string>
+</resources>

@@ -1,0 +1,374 @@
+/*
+ * Copyright (C) 2026 Scrolless
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package com.scrolless.app.feature.home.components
+
+import android.content.Context
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.scrolless.app.core.model.BlockOption
+import com.scrolless.app.core.model.BlockableApp
+import com.scrolless.app.core.model.IntervalUsage
+import com.scrolless.app.core.model.SessionSegment
+import com.scrolless.app.designsystem.component.AppUsageLegend
+import com.scrolless.app.designsystem.component.AutoResizingText
+import com.scrolless.app.designsystem.component.LegendItem
+import com.scrolless.app.designsystem.component.ProgressBarSegment
+import com.scrolless.app.designsystem.component.SegmentedCircularProgressIndicator
+import com.scrolless.app.designsystem.theme.ScrollessTheme
+import com.scrolless.app.designsystem.theme.UsageStatus
+import com.scrolless.app.designsystem.theme.indicatorColor
+import com.scrolless.app.designsystem.theme.indicatorContainerColor
+import com.scrolless.app.designsystem.theme.spacing
+import com.scrolless.app.designsystem.tooling.DevicePreviews
+import com.scrolless.app.designsystem.util.formatTime
+import com.scrolless.app.designsystem.util.hapticClickable
+import com.scrolless.app.feature.home.R
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+fun ProgressCard(
+    blockOption: BlockOption,
+    progress: Int,
+    currentUsage: Long,
+    limitMillis: Long,
+    intervalLengthMillis: Long,
+    intervalUsage: IntervalUsage,
+    modifier: Modifier = Modifier,
+    listSessionSegments: List<SessionSegment> = emptyList(),
+    onClick: () -> Unit = {},
+) {
+    val clampedProgress = progress.coerceIn(0, 100)
+
+    val isIntervalMode = blockOption == BlockOption.IntervalTimer
+    val isIntervalRunning = isIntervalMode && limitMillis > 0L && intervalLengthMillis > 0L && intervalUsage.isStarted
+    val intervalRemainingMillis = rememberIntervalRemainingTime(
+        isRunning = isIntervalRunning,
+        startMillis = intervalUsage.startMillis,
+        lengthMillis = intervalLengthMillis,
+    )
+
+    val primaryText = if (isIntervalMode) {
+        intervalUsage.usageMillis.formatTime()
+    } else {
+        currentUsage.formatTime()
+    }
+    val limitChipText = if (limitMillis > 0L && (isIntervalMode || blockOption == BlockOption.DailyLimit)) {
+        limitMillis.formatTime()
+    } else {
+        null
+    }
+
+    val resetText = if (isIntervalRunning) {
+        stringResource(R.string.interval_timer_next_reset_in, intervalRemainingMillis.formatTime())
+    } else {
+        null
+    }
+
+    val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    // Per-app usage data for the segmented progress indicator
+    val progressBarSegments =
+        remember(listSessionSegments, currentUsage, context, configuration) {
+            buildProgressBarSegments(
+                sessionSegments = listSessionSegments,
+                currentUsage = currentUsage,
+                context = context,
+            )
+        }
+    val legendItems = remember(progressBarSegments) { buildLegendItems(progressBarSegments) }
+
+    val segmentProgressFraction = when {
+        blockOption == BlockOption.DailyLimit && limitMillis > 0L -> clampedProgress / 100f
+        blockOption == BlockOption.IntervalTimer && limitMillis > 0L -> clampedProgress / 100f
+        progressBarSegments.isNotEmpty() -> 1f
+        else -> 0f
+    }
+
+    val isLimitReached = when (blockOption) {
+        BlockOption.DailyLimit -> limitMillis in 1..currentUsage
+        BlockOption.IntervalTimer -> limitMillis in 1..intervalUsage.usageMillis
+        else -> false
+    }
+
+    val motionScheme = MaterialTheme.motionScheme
+
+    // Card Exceeded Bounce animation
+    val cardScale = remember { Animatable(1f) }
+    LaunchedEffect(isLimitReached) {
+        if (isLimitReached) {
+            cardScale.animateTo(targetValue = 1.08f, animationSpec = motionScheme.slowSpatialSpec())
+            cardScale.animateTo(targetValue = 1f, animationSpec = motionScheme.slowSpatialSpec())
+        } else if (cardScale.value != 1f) {
+            cardScale.animateTo(targetValue = 1f, animationSpec = motionScheme.slowSpatialSpec())
+        }
+    }
+
+    // The chip sits on primaryContainer, so its neutral state must be built from
+    // onPrimaryContainer — pairing onPrimary (white in light theme) with a pale
+    // primaryContainer leaves the text at roughly 1.3:1 contrast.
+    val exceededColor = UsageStatus.EXCEEDED.indicatorColor
+    val effectsSpec = motionScheme.defaultEffectsSpec<Color>()
+
+    val limitChipBackground by animateColorAsState(
+        targetValue = if (isLimitReached) {
+            UsageStatus.EXCEEDED.indicatorContainerColor
+        } else {
+            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.10f)
+        },
+        animationSpec = effectsSpec,
+        label = "limitChipBackground",
+    )
+    val limitChipBorderColor by animateColorAsState(
+        targetValue = if (isLimitReached) {
+            exceededColor.copy(alpha = 0.7f)
+        } else {
+            Color.Transparent
+        },
+        animationSpec = effectsSpec,
+        label = "limitChipBorderColor",
+    )
+    val limitChipTextColor by animateColorAsState(
+        targetValue = if (isLimitReached) {
+            exceededColor
+        } else {
+            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.86f)
+        },
+        animationSpec = effectsSpec,
+        label = "limitChipTextColor",
+    )
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Card(
+            modifier = Modifier
+                .graphicsLayer(
+                    scaleX = cardScale.value,
+                    scaleY = cardScale.value,
+                )
+                .size(220.dp)
+                .padding(MaterialTheme.spacing.large)
+                .hapticClickable(onClick = onClick),
+            shape = RoundedCornerShape(96.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+
+                SegmentedCircularProgressIndicator(
+                    modifier = Modifier.size(180.dp),
+                    segments = progressBarSegments,
+                    progressFraction = segmentProgressFraction,
+                    strokeWidth = 8.dp,
+                    trackColor = Color.Transparent,
+                )
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(MaterialTheme.spacing.large),
+                ) {
+                    AutoResizingText(
+                        text = primaryText,
+                        modifier = Modifier
+                            .padding(top = MaterialTheme.spacing.large)
+                            .fillMaxWidth(),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        minFontSize = 16.sp,
+                    )
+                    if (limitChipText != null) {
+                        Spacer(Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(limitChipBackground)
+                                .border(1.dp, limitChipBorderColor, MaterialTheme.shapes.medium)
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.limit_chip, limitChipText),
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = limitChipTextColor,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(MaterialTheme.spacing.small))
+
+                    if (resetText != null) {
+                        Spacer(Modifier.height(6.dp))
+                        AutoResizingText(
+                            text = resetText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            minFontSize = 10.sp,
+                        )
+                    }
+                }
+            }
+        }
+
+        // Legend showing per-app usage
+        AppUsageLegend(
+            items = legendItems,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = MaterialTheme.spacing.small),
+        )
+    }
+}
+
+/**
+ * Counts down to the end of the running interval, rolling over on its own when one ends.
+ *
+ * Keyed on the window schedule only, so recording usage does not restart the countdown.
+ */
+@Composable
+private fun rememberIntervalRemainingTime(isRunning: Boolean, startMillis: Long, lengthMillis: Long): Long {
+    val isInspectionMode = LocalInspectionMode.current
+    val schedule = remember(startMillis) { IntervalUsage(startMillis = startMillis, usageMillis = 0L) }
+
+    var remaining by remember(isRunning, startMillis, lengthMillis) {
+        mutableLongStateOf(schedule.remainingMillisAt(System.currentTimeMillis(), lengthMillis))
+    }
+
+    LaunchedEffect(isRunning, schedule, lengthMillis, isInspectionMode) {
+        if (!isRunning || isInspectionMode) return@LaunchedEffect
+
+        while (isActive) {
+            remaining = schedule.remainingMillisAt(System.currentTimeMillis(), lengthMillis)
+            delay(1_000L.milliseconds)
+        }
+    }
+
+    return remaining
+}
+
+internal fun buildProgressBarSegments(
+    sessionSegments: List<SessionSegment>,
+    currentUsage: Long,
+    context: Context,
+): List<ProgressBarSegment> {
+    val totalSegmentMillis = sessionSegments.sumOf { it.durationMillis.coerceAtLeast(0L) }
+    val cappedTotalUsage = currentUsage.coerceAtLeast(0L)
+    val scale = if (totalSegmentMillis > 0L && cappedTotalUsage in 1..<totalSegmentMillis) {
+        cappedTotalUsage.toDouble() / totalSegmentMillis.toDouble()
+    } else {
+        1.0
+    }
+
+    return sessionSegments.mapNotNull { segment ->
+        val rawUsageMillis = segment.durationMillis
+        if (rawUsageMillis < 1_000L) {
+            return@mapNotNull null
+        }
+        val usageMillis = (rawUsageMillis * scale).toLong().coerceAtLeast(1L)
+
+        ProgressBarSegment(
+            segmentName = segment.app.displayName(context),
+            usageMillis = usageMillis,
+            color = segment.app.analyticsColor(),
+        )
+    }
+}
+
+internal fun buildLegendItems(progressBarSegments: List<ProgressBarSegment>): List<LegendItem> =
+    progressBarSegments.groupBy { it.segmentName }.mapNotNull { (segmentName, segments) ->
+        val totalMillis = segments.sumOf { it.usageMillis.coerceAtLeast(0L) }
+        if (totalMillis < 1_000L) {
+            return@mapNotNull null
+        }
+        totalMillis to LegendItem(
+            legendName = segmentName,
+            formattedTime = totalMillis.formatTime(),
+            color = segments.first().color,
+        )
+    }.sortedByDescending { it.first }
+        .map { it.second }
+
+@DevicePreviews
+@Composable
+fun ProgressCardPreview() {
+    ScrollessTheme(darkTheme = true) {
+        Surface {
+            ProgressCard(
+                blockOption = BlockOption.NothingSelected,
+                progress = 0,
+                currentUsage = 3600000L,
+                limitMillis = 0L,
+                intervalLengthMillis = 0L,
+                intervalUsage = IntervalUsage.NOT_STARTED,
+                listSessionSegments = listOf(
+                    SessionSegment(BlockableApp.TIKTOK, 1800000L, java.time.LocalDateTime.now()),
+                    SessionSegment(BlockableApp.REELS, 1200000L, java.time.LocalDateTime.now()),
+                    SessionSegment(BlockableApp.FACEBOOK, 600000L, java.time.LocalDateTime.now()),
+                ),
+            )
+        }
+    }
+}

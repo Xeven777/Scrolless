@@ -1,0 +1,375 @@
+/*
+ * Copyright (C) 2026 Scrolless
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package com.scrolless.app.core.model
+
+import android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK
+import androidx.compose.runtime.Immutable
+
+/**
+ * DetectionMethod holds the information to find out if blocked content is visible.
+ * Most of the apps work by just checking if the view id is present,
+ * but facebook (thanks) needs to be different and only works via content descriptions which is a nice hammer.
+ */
+sealed class DetectionMethod {
+    /**
+     * Matches a known view ID, using Android's direct lookup when available.
+     */
+    data class ViewId(val viewId: String) : DetectionMethod()
+
+    /**
+     * Matches known accessibility labels when a stable view ID is not available.
+     */
+    data class ContentDescriptions(val contentDescriptions: Set<String>) : DetectionMethod()
+
+    /**
+     * Matches the start of a label when the rest can change, such as an unread count.
+     * Can also require selection to avoid matching an inactive tab.
+     */
+    data class ContentDescriptionPrefix(val prefixes: Set<String>, val requireSelected: Boolean = false) : DetectionMethod()
+
+    /**
+     * Recognizes a video layout by view types, size, and related views inside it.
+     * Requiring the pieces to be nested avoids combining unrelated parts of the screen.
+     */
+    data class NodeStructure(
+        val classNames: Set<String>,
+        val minScreenWidthFraction: Float = 0f,
+        val minScreenHeightFraction: Float = 0f,
+        val requireScrollable: Boolean = false,
+        val requireLongClickable: Boolean = false,
+        val descendant: NodeStructure? = null,
+    ) : DetectionMethod() {
+        init {
+            require(minScreenWidthFraction in 0f..1f)
+            require(minScreenHeightFraction in 0f..1f)
+        }
+    }
+
+    /**
+     * Accepts any one of several known detection rules.
+     * This supports apps that expose different screens for the same kind of video.
+     */
+    data class AnyOf(val detectionMethods: List<DetectionMethod>) : DetectionMethod()
+
+    /**
+     * Matches a blocked screen by checking if [activityName] is contained within the window title
+     * or activity class name (used for features that run in a dedicated viewer, such as Facebook Stories).
+     */
+    data class ActivityName(val activityName: String) : DetectionMethod()
+}
+
+/**
+ * A plain copy of the screen details used by detection.
+ */
+@Immutable
+data class DetectionNode(
+    val nodeId: Int,
+    val parentNodeId: Int? = null,
+    val viewId: String? = null,
+    val contentDescription: String? = null,
+    val className: String? = null,
+    val screenWidthFraction: Float = 0f,
+    val screenHeightFraction: Float = 0f,
+    val isVisible: Boolean = true,
+    val isSelected: Boolean = false,
+    val isScrollable: Boolean = false,
+    val isLongClickable: Boolean = false,
+)
+
+/**
+ * Describes how to block detected content: navigate away or cover its video region.
+ * Detection chooses the action; the service carries it out when the user's limit is reached.
+ */
+sealed interface ContentBlockAction {
+    /**
+     * Uses an Android navigation action, such as Back or Home, to leave the video.
+     * Used to leave the current screen the user is on
+     *  (example if the user is on Reels it will press back so that he moves into the main Instagram feed)
+     */
+    data class PerformGlobalAction(val action: Int) : ContentBlockAction
+
+    /**
+     * Hides only the detected video rectangle so the rest of the app remains usable.
+     */
+    data object CoverVideoRegion : ContentBlockAction
+}
+
+/**
+ * Rules to identify when an app is showing a video received in a direct message (DM),
+ * so blocking can be suppressed if the user allows DM videos.
+ *
+ * @property requiredViewIds All of these view IDs must be visible.
+ * @property anyOfViewIds At least one of these view IDs must be visible (if non-empty).
+ * @property forbiddenViewIds None of these view IDs may be visible.
+ * @property replyLabelsBelowPlayer App-provided labels for a visible, enabled, non-editable reply button
+ * directly below the detected player. Requires a content cover; combines with the ID rules above.
+ */
+@Immutable
+data class DmExemptionRule(
+    val requiredViewIds: Set<String> = emptySet(),
+    val anyOfViewIds: Set<String> = emptySet(),
+    val forbiddenViewIds: Set<String> = emptySet(),
+    val replyLabelsBelowPlayer: ReplyLabels? = null,
+)
+
+/**
+ * Lists supported apps, their package variants, and their default detection and blocking action.
+ * A screen-specific cover detector can override the default action for a detected video region.
+ */
+@Immutable
+enum class BlockableApp(
+    private val packageIds: List<String>,
+    private val detectionMethod: DetectionMethod,
+    private val blockAction: ContentBlockAction,
+    private val dmExemptionRule: DmExemptionRule? = null,
+    private val storiesDetectionMethod: DetectionMethod? = null,
+) {
+    REELS(
+        packageIds = listOf("com.instagram.android"),
+        detectionMethod = DetectionMethod.ViewId("clips_viewer_view_pager"),
+        storiesDetectionMethod = DetectionMethod.ViewId("reel_viewer_root"),
+        blockAction = ContentBlockAction.PerformGlobalAction(GLOBAL_ACTION_BACK),
+        // Instagram DM Reels display sender info and a reply bar, while algorithmic suggestion
+        // carousels introduce a "suggested_title" which must forbid the exemption.
+        dmExemptionRule = DmExemptionRule(
+            requiredViewIds = setOf(
+                "sender_username_or_fullname",
+                "sender_timestamp",
+                "reply_bar_edittext",
+            ),
+            forbiddenViewIds = setOf("suggested_title"),
+        ),
+    ),
+    SHORTS(
+        packageIds = listOf(
+            "com.google.android.youtube",
+            "com.google.android.apps.youtube.kids",
+            "app.revanced.android.youtube",
+        ),
+        detectionMethod = DetectionMethod.ViewId("reel_player_page_container"),
+        blockAction = ContentBlockAction.PerformGlobalAction(GLOBAL_ACTION_BACK),
+    ),
+    TIKTOK(
+        packageIds = listOf(
+            "com.zhiliaoapp.musically",
+            "com.ss.android.ugc.trill",
+            "com.ss.android.ugc.aweme",
+        ),
+        detectionMethod = DetectionMethod.ViewId("player_view"),
+        // TikTok Stories play through the same player_view as regular feed videos, so no need to add extra detection
+        blockAction = ContentBlockAction.CoverVideoRegion,
+        // Translated recipient labels survive resource-ID renaming across TikTok builds.
+        dmExemptionRule = DmExemptionRule(
+            replyLabelsBelowPlayer = TikTokDmReplyLabels,
+        ),
+    ),
+    // TikTok Lite Stories share the same video player view as the feed, so they are already covered by this detection.
+    TIKTOK_LITE(
+        packageIds = listOf("com.zhiliaoapp.musically.go"),
+        detectionMethod = DetectionMethod.ViewId("simplayer_api_player_view"),
+        blockAction = ContentBlockAction.CoverVideoRegion,
+    ),
+    FACEBOOK(
+        packageIds = listOf("com.facebook.katana"),
+        // Facebook exposes different accessibility trees depending on how a Reel is opened and changes
+        // its user-facing labels with the app language.
+        // 1. Legacy Reel viewers expose internal composer attachment labels.
+        // 2. "Reels" text content seems to remain stable in many locales. A selected navigation
+        //    label beginning with "Reels," is a useful fast path, but is not required for other languages.
+        // 3. The fallback requires one real viewer subtree: a large scrolling viewer that
+        //    contains a large, long-clickable item, which itself contains the large video surface.
+        detectionMethod = DetectionMethod.AnyOf(
+            listOf(
+                DetectionMethod.ContentDescriptions(
+                    setOf(
+                        "FbShortsComposerAttachmentComponentSpec_STICKER",
+                        "FbShortsComposerAttachmentComponentSpec_GIF",
+                    ),
+                ),
+                DetectionMethod.ContentDescriptionPrefix(
+                    prefixes = setOf("Reels,"),
+                    requireSelected = true,
+                ),
+                DetectionMethod.NodeStructure(
+                    classNames = setOf("androidx.recyclerview.widget.RecyclerView"),
+                    minScreenWidthFraction = 0.9f,
+                    minScreenHeightFraction = 0.75f,
+                    requireScrollable = true,
+                    descendant = DetectionMethod.NodeStructure(
+                        classNames = setOf("android.widget.Button"),
+                        minScreenWidthFraction = 0.9f,
+                        minScreenHeightFraction = 0.75f,
+                        requireLongClickable = true,
+                        descendant = DetectionMethod.NodeStructure(
+                            classNames = setOf("android.view.SurfaceView"),
+                            minScreenWidthFraction = 0.9f,
+                            minScreenHeightFraction = 0.75f,
+                        ),
+                    ),
+                ),
+            ),
+        ),
+        storiesDetectionMethod = DetectionMethod.ActivityName("StoryViewerActivity"),
+        blockAction = ContentBlockAction.PerformGlobalAction(GLOBAL_ACTION_BACK),
+    ),
+    FACEBOOK_LITE(
+        packageIds = listOf("com.facebook.lite"),
+        detectionMethod = DetectionMethod.ViewId("video_view"),
+        blockAction = ContentBlockAction.PerformGlobalAction(GLOBAL_ACTION_BACK),
+    ),
+    SNAPCHAT(
+        packageIds = listOf("com.snapchat.android"),
+        detectionMethod = DetectionMethod.ViewId("spotlight_container"),
+        storiesDetectionMethod = DetectionMethod.ViewId("opera_viewer"),
+        blockAction = ContentBlockAction.PerformGlobalAction(GLOBAL_ACTION_BACK),
+    ),
+    ;
+
+    fun getBlockAction(): ContentBlockAction = blockAction
+
+    fun getDetectionMethod(includeStories: Boolean = false): DetectionMethod = if (includeStories && storiesDetectionMethod != null) {
+        DetectionMethod.AnyOf(listOf(detectionMethod, storiesDetectionMethod))
+    } else {
+        detectionMethod
+    }
+
+    fun getDmExemptionRule(): DmExemptionRule? = dmExemptionRule
+
+    fun getPackageIds(): List<String> = packageIds
+
+    fun resolvePackage(packageName: String): String? = packageName.takeIf { it in packageIds }
+}
+
+/**
+ * Pairs a supported app with the actual package that is open.
+ * Keeping that package name lets view-ID lookups work with regional and modified app variants.
+ */
+@Immutable
+data class ResolvedBlockableApp(val app: BlockableApp, val packageId: String) {
+    val dmExemptionRule: DmExemptionRule? get() = app.getDmExemptionRule()
+
+    fun getDetectionMethod(includeStories: Boolean = false): DetectionMethod = app.getDetectionMethod(includeStories)
+
+    fun getBlockAction(): ContentBlockAction = app.getBlockAction()
+
+    fun getViewId(viewId: String): String = "$packageId:id/$viewId"
+
+    fun getViewId(detectionMethod: DetectionMethod.ViewId): String = getViewId(detectionMethod.viewId)
+
+    fun matchesDetectionNodes(nodes: Collection<DetectionNode>, detectionMethod: DetectionMethod = getDetectionMethod()): Boolean {
+        // Group once so nested-layout checks can find children without rescanning the whole list.
+        val childrenByParentId = nodes.groupBy(DetectionNode::parentNodeId)
+        return detectionMethod.matches(nodes, childrenByParentId)
+    }
+
+    /** Try rules that need only one node. Layout rules still need the full set of related nodes. */
+    fun matchesFastDetectionNode(node: DetectionNode, detectionMethod: DetectionMethod = getDetectionMethod()): Boolean {
+        return detectionMethod.matchesSimpleNode(node)
+    }
+
+    // Tell the screen scanner which view types matter, so it can skip unrelated layout details.
+    fun getStructuralClassNames(detectionMethod: DetectionMethod = getDetectionMethod()): Set<String> {
+        return buildSet { detectionMethod.collectStructuralClassNames(this) }
+    }
+
+    private fun DetectionMethod.matchesSimpleNode(node: DetectionNode): Boolean {
+        if (!node.isVisible) return false
+        return when (this) {
+            is DetectionMethod.ViewId -> node.viewId == getViewId(this)
+
+            is DetectionMethod.ContentDescriptions -> {
+                val description = node.contentDescription ?: return false
+                contentDescriptions.any { expected -> description.equals(expected, ignoreCase = true) }
+            }
+
+            is DetectionMethod.ContentDescriptionPrefix -> {
+                val description = node.contentDescription ?: return false
+                val prefixMatches = prefixes.any { prefix -> description.startsWith(prefix, ignoreCase = true) }
+                prefixMatches && (!requireSelected || node.isSelected)
+            }
+
+            is DetectionMethod.NodeStructure -> false
+
+            // Activity names are resolved at the window/component level, not within individual view nodes.
+            is DetectionMethod.ActivityName -> false
+
+            is DetectionMethod.AnyOf -> detectionMethods.any { method -> method.matchesSimpleNode(node) }
+        }
+    }
+
+    private fun DetectionMethod.collectStructuralClassNames(destination: MutableSet<String>) {
+        when (this) {
+            is DetectionMethod.NodeStructure -> {
+                destination += classNames
+                descendant?.collectStructuralClassNames(destination)
+            }
+
+            is DetectionMethod.AnyOf -> detectionMethods.forEach { method -> method.collectStructuralClassNames(destination) }
+
+            is DetectionMethod.ViewId,
+            is DetectionMethod.ContentDescriptions,
+            is DetectionMethod.ContentDescriptionPrefix,
+            is DetectionMethod.ActivityName,
+            -> Unit
+        }
+    }
+
+    private fun DetectionMethod.matches(nodes: Collection<DetectionNode>, childrenByParentId: Map<Int?, List<DetectionNode>>): Boolean {
+        return when (this) {
+            is DetectionMethod.ViewId,
+            is DetectionMethod.ContentDescriptions,
+            is DetectionMethod.ContentDescriptionPrefix,
+            -> nodes.any { node -> matchesSimpleNode(node) }
+
+            is DetectionMethod.NodeStructure -> nodes.any { node ->
+                matchesStructure(node, childrenByParentId)
+            }
+
+            // Activity names are resolved at the window/component level, not within the node hierarchy.
+            is DetectionMethod.ActivityName -> false
+
+            is DetectionMethod.AnyOf -> detectionMethods.any { method -> method.matches(nodes, childrenByParentId) }
+        }
+    }
+
+    private fun DetectionMethod.NodeStructure.matchesStructure(
+        node: DetectionNode,
+        childrenByParentId: Map<Int?, List<DetectionNode>>,
+    ): Boolean {
+        val matchesThisNode = node.isVisible &&
+            node.className in classNames &&
+            node.screenWidthFraction >= minScreenWidthFraction &&
+            node.screenHeightFraction >= minScreenHeightFraction &&
+            (!requireScrollable || node.isScrollable) &&
+            (!requireLongClickable || node.isLongClickable)
+
+        if (!matchesThisNode) return false
+        // Related pieces must be inside this matching node, not somewhere else on the screen.
+        val requiredDescendant = descendant ?: return true
+        return requiredDescendant.hasMatchingDescendant(node.nodeId, childrenByParentId)
+    }
+
+    private fun DetectionMethod.NodeStructure.hasMatchingDescendant(
+        parentNodeId: Int,
+        childrenByParentId: Map<Int?, List<DetectionNode>>,
+    ): Boolean {
+        // Allow extra wrapper views between the required parts of the video layout.
+        return childrenByParentId[parentNodeId].orEmpty().any { child ->
+            matchesStructure(child, childrenByParentId) || hasMatchingDescendant(child.nodeId, childrenByParentId)
+        }
+    }
+}

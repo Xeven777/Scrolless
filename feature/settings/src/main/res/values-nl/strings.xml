@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2026 Scrolless
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<resources>
+    <string name="back">Terug</string>
+    <string name="settings">Instellingen</string>
+    <string name="settings_section_blocking">Blokkeren</string>
+    <string name="settings_pause_duration_title">Pauzeduur</string>
+    <string name="settings_pause_duration_description">Hoe lang het blokkeren wordt gepauzeerd wanneer u op Pauzeren tikt.</string>
+    <plurals name="settings_pause_duration_value">
+        <item quantity="one">%1$d minuut</item>
+        <item quantity="other">%1$d minuten</item>
+    </plurals>
+    <string name="settings_allow_videos_sent_by_dms_description">Blokkeer geen video\'s die via DM\'s zijn verzonden.</string>
+    <string name="settings_allow_videos_sent_by_dms_note">Niet ondersteund in TikTok Lite</string>
+    <string name="settings_allow_videos_sent_by_dms_title">Video\'s verzonden via DM\'s</string>
+    <string name="settings_show_onscreen_timer_description">Houd een zwevende timer zichtbaar tijdens het bekijken van korte video\'s.</string>
+    <string name="settings_show_onscreen_timer_title">Toon timer op scherm</string>
+    <string name="settings_include_stories_title">Verhalen meetellen</string>
+    <string name="settings_include_stories_description">Tel de tijd die je besteedt aan het bekijken van verhalen mee en pas je huidige blokkeermodus en tijdslimieten toe.</string>
+    <string name="settings_include_stories_note">Momenteel ondersteund op Instagram, Snapchat en Facebook.</string>
+</resources>

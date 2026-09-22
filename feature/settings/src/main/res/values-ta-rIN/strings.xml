@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2026 Scrolless
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<resources>
+    <string name="back">பின்செல்க</string>
+    <string name="settings">அமைப்புகள்</string>
+    <string name="settings_section_blocking">தடுப்பு</string>
+    <string name="settings_pause_duration_title">இடைநிறுத்த கால அளவு</string>
+    <string name="settings_pause_duration_description">நீங்கள் இடைநிறுத்து என்பதைத் தட்டும்போது, தடுப்பு எவ்வளவு நேரம் நிறுத்தி வைக்கப்படும்.</string>
+    <plurals name="settings_pause_duration_value">
+        <item quantity="one">%1$d நிமிடம்</item>
+        <item quantity="other">%1$d நிமிடங்கள்</item>
+    </plurals>
+    <string name="settings_allow_videos_sent_by_dms_description">நேரடிச் செய்திகளில் அனுப்பப்பட்ட வீடியோக்களைத் தடுக்க வேண்டாம்.</string>
+    <string name="settings_allow_videos_sent_by_dms_note">TikTok Lite இல் இந்த அம்சம் ஆதரிக்கப்படவில்லை</string>
+    <string name="settings_allow_videos_sent_by_dms_title">நேரடிச் செய்திகளில் அனுப்பப்பட்ட வீடியோக்கள்</string>
+    <string name="settings_show_onscreen_timer_description">குறுகிய வீடியோக்களைப் பார்க்கும்போது மிதக்கும் டைமரைத் திரையில் தெரியும்படி வைத்திருங்கள்.</string>
+    <string name="settings_show_onscreen_timer_title">திரையில் டைமரைக் காட்டு</string>
+    <string name="settings_include_stories_title">ஸ்டோரிகளைச் சேர்க்கவும்</string>
+    <string name="settings_include_stories_description">ஸ்டோரிகளைப் பார்ப்பதில் செலவிடும் நேரத்தைக் கணக்கிட்டு, தற்போதைய தடுப்பு முறையையும் நேர வரம்புகளையும் பயன்படுத்தவும்.</string>
+    <string name="settings_include_stories_note">தற்போது Instagram, Snapchat மற்றும் Facebook-இல் ஆதரிக்கப்படுகிறது.</string>
+</resources>

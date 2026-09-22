@@ -1,0 +1,45 @@
+# Operating System
+.DS_Store
+*.log
+
+# Java/Kotlin
+*.class
+*.dex
+
+# Gradle
+.gradle/
+build/
+gradle.xml
+
+# Android
+local.properties
+*.apk
+*.aab
+output.json
+captures/
+.externalNativeBuild/
+.cxx/
+bin/
+gen/
+
+# IntelliJ IDEA / Android Studio
+.idea/
+*.iml
+.kotlin/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# ProGuard
+proguard/
+proguard-project.txt
+
+# Signing keys (never commit these)
+*.jks
+*.keystore
+
+# Build / local files
+gradle/gradle-daemon-jvm.properties
+.worktrees/
