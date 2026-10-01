@@ -47,6 +47,7 @@ jobs:
               exit 1
             fi
           done
+          mkdir -p keystore
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > keystore/release.jks
           # printf, not a heredoc: a password containing $, `, \ or ! would be
           # mangled by heredoc expansion and signing would silently break.
