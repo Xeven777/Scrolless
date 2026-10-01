@@ -28,7 +28,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+ */
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -43,30 +43,19 @@ plugins {
 // Written by the Release workflow from repo secrets; absent locally, so
 // `assembleRelease` just produces an unsigned APK.
 val keystoreProps =
-    Properties().apply {
-        val file = rootProject.file("keystore.properties")
-        if (file.exists()) file.inputStream().use { load(it) }
-    }
-
-    }
+        Properties().apply {
+            val file = rootProject.file("keystore.properties")
+            if (file.exists()) file.inputStream().use { load(it) }
+        }
 
 android {
-    compileSdk =
-        libs.versions.compileSdk
-            .get()
-            .toInt()
+    compileSdk = libs.versions.compileSdk.get().toInt()
     namespace = "com.scrolless.app"
 
     defaultConfig {
         applicationId = "com.scrolless.app"
-        minSdk =
-            libs.versions.minSdk
-                .get()
-                .toInt()
-        targetSdk =
-            libs.versions.targetSdk
-                .get()
-                .toInt()
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 23
         versionName = "1.7.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -77,15 +66,14 @@ android {
         includeInApk = false
     }
 
-
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".debug"
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
+                    getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro",
             )
         }
 
@@ -93,17 +81,17 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
+                    getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro",
             )
             if (keystoreProps.isNotEmpty()) {
                 signingConfig =
-                    signingConfigs.create("release") {
-                        storeFile = keystorePath("storeFile")
-                        storePassword = keystoreProps.getProperty("storePassword")
-                        keyAlias = keystoreProps.getProperty("keyAlias")
-                        keyPassword = keystoreProps.getProperty("keyPassword")
-                    }
+                        signingConfigs.create("release") {
+                            storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+                            storePassword = keystoreProps.getProperty("storePassword")
+                            keyAlias = keystoreProps.getProperty("keyAlias")
+                            keyPassword = keystoreProps.getProperty("keyPassword")
+                        }
             }
         }
     }
@@ -131,11 +119,7 @@ android {
     }
 }
 
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_17
-    }
-}
+kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_17 } }
 
 dependencies {
     implementation(libs.androidx.material3)
