@@ -271,7 +271,11 @@ class ScrollessBlockAccessibilityService : AccessibilityService() {
         }
 
         serviceScope.launch {
-            userSettingsStore.getTimerOverlayEnabled().collect { currentTimerOverlayEnabled = it }
+            userSettingsStore.getTimerOverlayEnabled().collect {
+                currentTimerOverlayEnabled = it
+                refreshDetectedContent()
+                reconsiderVisibleContent()
+            }
         }
 
         // Re-detect an open video when the DM preference changes, then apply the new decision.
