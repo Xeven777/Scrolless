@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -43,7 +42,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -58,6 +56,7 @@ import com.scrolless.app.designsystem.component.AutoResizingText
 import com.scrolless.app.designsystem.component.ScrollessCard
 import com.scrolless.app.designsystem.icon.ScrollessIcons
 import com.scrolless.app.designsystem.theme.ScrollessTheme
+import com.scrolless.app.designsystem.theme.spacing
 import com.scrolless.app.designsystem.tooling.DevicePreviews
 import com.scrolless.app.feature.home.R
 import com.scrolless.app.feature.home.openActivityAccessibilitySettings
@@ -84,34 +83,33 @@ private fun HelpDialogContent(onDismiss: () -> Unit) {
     ScrollessCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(20.dp),
+            .padding(MaterialTheme.spacing.large),
         containerColor = MaterialTheme.colorScheme.background,
     ) {
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+                .padding(MaterialTheme.spacing.extraLarge),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Header
             AutoResizingText(
                 text = stringResource(R.string.help_dialog_title),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 minFontSize = 14.sp,
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
             HorizontalDivider(
-                modifier = Modifier.alpha(0.5f),
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.outlineVariant,
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
             // Step 1
             HelpStep(
@@ -120,7 +118,7 @@ private fun HelpDialogContent(onDismiss: () -> Unit) {
                 description = stringResource(R.string.help_step1_description),
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
             // Step 2
             HelpStep(
@@ -129,7 +127,7 @@ private fun HelpDialogContent(onDismiss: () -> Unit) {
                 description = stringResource(R.string.help_step2_description),
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
             // Step 3
             HelpStep(
@@ -138,12 +136,12 @@ private fun HelpDialogContent(onDismiss: () -> Unit) {
                 description = stringResource(R.string.help_step3_description),
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
             // GitHub Card
             GitHubCard()
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
             // Action Buttons
             val context = LocalContext.current
@@ -164,7 +162,7 @@ private fun HelpDialogContent(onDismiss: () -> Unit) {
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                 ),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.large,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -176,20 +174,20 @@ private fun HelpDialogContent(onDismiss: () -> Unit) {
                         modifier = Modifier.size(18.dp),
                         tint = MaterialTheme.colorScheme.onPrimary,
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
                     AutoResizingText(
                         text = stringResource(R.string.go_to_accessibility_settings),
                         modifier = Modifier.weight(1f, fill = false),
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onPrimary,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,
                         minFontSize = 10.sp,
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
             OutlinedButton(
                 onClick = {
@@ -199,7 +197,7 @@ private fun HelpDialogContent(onDismiss: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.large,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -211,13 +209,13 @@ private fun HelpDialogContent(onDismiss: () -> Unit) {
                         modifier = Modifier.size(18.dp),
                         tint = MaterialTheme.colorScheme.primary,
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
                     AutoResizingText(
                         text = stringResource(R.string.close),
                         modifier = Modifier.weight(1f, fill = false),
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,
                         minFontSize = 10.sp,
                     )
@@ -238,7 +236,7 @@ private fun HelpStep(stepNumber: String, title: String, description: String) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(MaterialTheme.spacing.medium),
             verticalAlignment = Alignment.Top,
         ) {
             // Step Number Circle
@@ -254,23 +252,23 @@ private fun HelpStep(stepNumber: String, title: String, description: String) {
                 Text(
                     text = stepNumber,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(MaterialTheme.spacing.medium))
 
             // Step Content
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
                 Text(
                     text = description,
@@ -302,12 +300,12 @@ private fun GitHubCard() {
         },
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(MaterialTheme.spacing.small),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -321,14 +319,14 @@ private fun GitHubCard() {
                 text = stringResource(R.string.visit_github),
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 8.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    .padding(horizontal = MaterialTheme.spacing.small),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
             )
 
-            Spacer(modifier = Modifier.width(24.dp))
+            Spacer(modifier = Modifier.width(MaterialTheme.spacing.extraLarge))
         }
     }
 }

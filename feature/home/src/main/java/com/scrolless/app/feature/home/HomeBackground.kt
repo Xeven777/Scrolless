@@ -38,8 +38,8 @@ internal fun HomeBackground(
             modifier = Modifier
                 .fillMaxSize()
                 .radialGradientScrim(
-                    baseColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                    accentColor = accentColor?.copy(alpha = 0.22f),
+                    baseColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.09f),
+                    accentColor = accentColor?.copy(alpha = 0.13f),
                     accentStrength = accentStrength,
                 ),
         )

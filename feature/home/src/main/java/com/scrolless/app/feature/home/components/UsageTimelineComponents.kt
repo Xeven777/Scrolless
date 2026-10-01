@@ -38,8 +38,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -74,8 +76,11 @@ import com.scrolless.app.designsystem.component.ScrollessCard
 import com.scrolless.app.designsystem.icon.ScrollessIcons
 import com.scrolless.app.designsystem.theme.ScrollessPillShape
 import com.scrolless.app.designsystem.theme.ScrollessTheme
+import com.scrolless.app.designsystem.theme.UsageStatus
 import com.scrolless.app.designsystem.theme.facebookColor
 import com.scrolless.app.designsystem.theme.facebookLiteColor
+import com.scrolless.app.designsystem.theme.indicatorColor
+import com.scrolless.app.designsystem.theme.indicatorContainerColor
 import com.scrolless.app.designsystem.theme.instagramReelsColor
 import com.scrolless.app.designsystem.theme.snapchatColor
 import com.scrolless.app.designsystem.theme.spacing
@@ -244,11 +249,37 @@ fun UsageTimelineSection(analytics: UsageAnalyticsUiState, sessionChunksExpanded
                     selectedDate = analytics.selectedDate,
                 )
                 if (sessionSegments.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.usage_analytics_timeline_empty),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    // An empty day is good news, so it gets a mark of reassurance rather than a
+                    // bare grey sentence that reads like missing data.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = MaterialTheme.spacing.small),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(
+                                    color = UsageStatus.COMFORTABLE.indicatorContainerColor,
+                                    shape = CircleShape,
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(id = ScrollessIcons.CheckCircle),
+                                contentDescription = null,
+                                tint = UsageStatus.COMFORTABLE.indicatorColor,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                        Text(
+                            text = stringResource(R.string.usage_analytics_timeline_empty),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
                 if (sessionSegments.isNotEmpty()) {
                     AnimatedVisibility(

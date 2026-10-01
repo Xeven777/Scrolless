@@ -21,7 +21,6 @@ import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +33,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.scrolless.app.designsystem.util.rememberHapticHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -80,13 +78,13 @@ fun AnimatedButton(onClick: () -> Unit, text: String, delay: Long) {
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
         ),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.large,
     ) {
         Text(
             text = text,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSecondaryContainer,
-            fontSize = 16.sp,
         )
     }
 }

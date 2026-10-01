@@ -35,7 +35,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -70,6 +69,7 @@ import com.scrolless.app.designsystem.component.ScrollessCard
 import com.scrolless.app.designsystem.component.ScrollessSheetContent
 import com.scrolless.app.designsystem.icon.ScrollessIcons
 import com.scrolless.app.designsystem.theme.ScrollessTheme
+import com.scrolless.app.designsystem.theme.spacing
 import com.scrolless.app.designsystem.tooling.DevicePreviews
 import com.scrolless.app.designsystem.util.rememberHapticHelper
 import com.scrolless.app.feature.home.R
@@ -132,21 +132,21 @@ private fun AccessibilityExplainerContent(onDismiss: () -> Unit, onOpenSettings:
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp)
-                .padding(top = 60.dp), // Space for floating icon (40dp + 20dp)
+                .padding(MaterialTheme.spacing.extraLarge)
+                .padding(top = MaterialTheme.spacing.extraLarge + MaterialTheme.spacing.huge), // clears the floating icon
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Title
             AutoResizingText(
                 text = stringResource(R.string.accessibility_explainer_title),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
             // Steps with staggered animation
             AccessibilityStep(
@@ -154,21 +154,21 @@ private fun AccessibilityExplainerContent(onDismiss: () -> Unit, onOpenSettings:
                 text = stringResource(R.string.accessibility_explainer_step1),
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
             AccessibilityStep(
                 stepNumber = stringResource(R.string.step_two),
                 text = stringResource(R.string.accessibility_explainer_step2),
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
             AccessibilityStep(
                 stepNumber = stringResource(R.string.step_three),
                 text = stringResource(R.string.accessibility_explainer_step3),
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
             val githubUrl = stringResource(R.string.github_url)
 
@@ -197,38 +197,38 @@ private fun AccessibilityExplainerContent(onDismiss: () -> Unit, onOpenSettings:
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp),
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(MaterialTheme.spacing.large))
                 AutoResizingText(
                     text = stringResource(R.string.accessibility_explainer_open_source),
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary,
                     maxLines = 1,
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
             // Privacy Note
             ScrollessCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
-                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
                 Row(
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier.padding(MaterialTheme.spacing.medium),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         painter = painterResource(id = ScrollessIcons.Info),
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(MaterialTheme.spacing.medium))
                     Text(
                         text = stringResource(R.string.accessibility_explainer_privacy_note),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Start,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.weight(1f),
@@ -236,7 +236,7 @@ private fun AccessibilityExplainerContent(onDismiss: () -> Unit, onOpenSettings:
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
             // Proceed Button
             Button(
@@ -250,7 +250,7 @@ private fun AccessibilityExplainerContent(onDismiss: () -> Unit, onOpenSettings:
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                 ),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.large,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -262,20 +262,20 @@ private fun AccessibilityExplainerContent(onDismiss: () -> Unit, onOpenSettings:
                         modifier = Modifier.size(18.dp),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
                     AutoResizingText(
                         text = stringResource(R.string.accessibility_explainer_proceed_button),
                         modifier = Modifier.weight(1f, fill = false),
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,
                         minFontSize = 10.sp,
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
             // Not Now Button
             TextButton(
@@ -297,13 +297,13 @@ private fun AccessibilityExplainerContent(onDismiss: () -> Unit, onOpenSettings:
                         modifier = Modifier.size(18.dp),
                         tint = MaterialTheme.colorScheme.primary,
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
                     AutoResizingText(
                         text = stringResource(R.string.accessibility_explainer_not_now_button),
                         modifier = Modifier.weight(1f, fill = false),
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,
                         minFontSize = 10.sp,
                     )
@@ -349,7 +349,7 @@ private fun AccessibilityStep(stepNumber: String, text: String) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(14.dp),
+                    .padding(MaterialTheme.spacing.medium),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Step Number
@@ -366,11 +366,11 @@ private fun AccessibilityStep(stepNumber: String, text: String) {
                         text = stepNumber,
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                     )
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(MaterialTheme.spacing.large))
 
                 // Step Text
                 Text(

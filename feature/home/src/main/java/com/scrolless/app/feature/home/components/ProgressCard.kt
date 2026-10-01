@@ -45,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
@@ -191,6 +192,10 @@ fun ProgressCard(
         label = "limitChipTextColor",
     )
 
+    // Squircle-ish radius on a 220dp hero card; deliberately rounder than any shape-scale
+    // token so the ring reads as one continuous object.
+    val cardShape = RoundedCornerShape(96.dp)
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -203,10 +208,19 @@ fun ProgressCard(
                 )
                 .size(220.dp)
                 .padding(MaterialTheme.spacing.large)
+                // A shadow tinted with the surface hue reads as light coming from the palette
+                // itself; a generic black drop shadow is what makes cards look pasted on.
+                .shadow(
+                    elevation = 10.dp,
+                    shape = cardShape,
+                    clip = false,
+                    ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
+                    spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
+                )
                 .hapticClickable(onClick = onClick),
-            shape = RoundedCornerShape(96.dp),
+            shape = cardShape,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -230,7 +244,8 @@ fun ProgressCard(
                         modifier = Modifier
                             .padding(top = MaterialTheme.spacing.large)
                             .fillMaxWidth(),
-                        style = MaterialTheme.typography.headlineSmall,
+                        // Tabular figures stop the digits from reflowing as the timer ticks.
+                        style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         textAlign = TextAlign.Center,

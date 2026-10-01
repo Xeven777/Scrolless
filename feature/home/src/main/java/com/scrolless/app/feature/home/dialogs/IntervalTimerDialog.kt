@@ -37,12 +37,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.scrolless.app.designsystem.component.ScrollessCard
 import com.scrolless.app.designsystem.component.ScrollessSlider
 import com.scrolless.app.designsystem.theme.ScrollessTheme
+import com.scrolless.app.designsystem.theme.spacing
 import com.scrolless.app.designsystem.tooling.DevicePreviews
 import com.scrolless.app.designsystem.util.formatMinutes
 import com.scrolless.app.designsystem.util.rememberHapticHelper
@@ -88,22 +88,22 @@ fun IntervalTimerDialog(
         ScrollessCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = MaterialTheme.spacing.extraLarge),
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                    .padding(horizontal = MaterialTheme.spacing.extraLarge, vertical = MaterialTheme.spacing.extraLarge),
             ) {
                 Text(
                     text = stringResource(R.string.interval_timer_dialog_title),
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold,
                 )
 
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(MaterialTheme.spacing.extraSmall))
 
                 Text(
                     text = stringResource(R.string.interval_timer_dialog_subtitle),
@@ -111,7 +111,7 @@ fun IntervalTimerDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(MaterialTheme.spacing.extraLarge))
 
                 IntervalSettingSection(
                     label = stringResource(R.string.interval_timer_dialog_break_label),
@@ -140,7 +140,7 @@ fun IntervalTimerDialog(
                     )
                 }
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(MaterialTheme.spacing.extraLarge))
 
                 IntervalSettingSection(
                     label = stringResource(R.string.interval_timer_dialog_allowance_label),
@@ -169,7 +169,7 @@ fun IntervalTimerDialog(
                     )
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(MaterialTheme.spacing.extraLarge))
 
                 Text(
                     text = stringResource(
@@ -182,16 +182,17 @@ fun IntervalTimerDialog(
                     textAlign = TextAlign.Start,
                 )
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(MaterialTheme.spacing.extraLarge))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small, Alignment.End),
                 ) {
                     TextButton(
                         onClick = {
                             onDismiss()
                         },
+                        shape = MaterialTheme.shapes.large,
                     ) {
                         Text(text = stringResource(R.string.interval_timer_dialog_cancel))
                     }
@@ -203,6 +204,7 @@ fun IntervalTimerDialog(
                                 allowanceMinutes.minutesToMillis(),
                             )
                         },
+                        shape = MaterialTheme.shapes.large,
                     ) {
                         Text(text = stringResource(R.string.interval_timer_dialog_save))
                     }
@@ -216,7 +218,7 @@ fun IntervalTimerDialog(
 private fun IntervalSettingSection(label: String, description: String, formattedValue: String, slider: @Composable () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -232,7 +234,7 @@ private fun IntervalSettingSection(label: String, description: String, formatted
                 text = formattedValue,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
             )
         }
         slider()

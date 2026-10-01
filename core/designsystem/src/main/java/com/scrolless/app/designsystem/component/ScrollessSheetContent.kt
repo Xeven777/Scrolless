@@ -27,8 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-/** Top corner radius for bottom sheets (MD3 extra-large-increased). */
-val ScrollessSheetTopCornerRadius = 32.dp
+/** Top corner radius for bottom sheets. Mirrors [com.scrolless.app.designsystem.theme.ScrollessShapes.extraLarge]. */
+val ScrollessSheetTopCornerRadius = 28.dp
 
 /**
  * Standard bottom-sheet chrome: full-width container with rounded top corners.

@@ -56,6 +56,7 @@ import com.scrolless.app.designsystem.component.ScrollessCard
 import com.scrolless.app.designsystem.component.ScrollessSheetContent
 import com.scrolless.app.designsystem.icon.ScrollessIcons
 import com.scrolless.app.designsystem.theme.ScrollessTheme
+import com.scrolless.app.designsystem.theme.spacing
 import com.scrolless.app.designsystem.tooling.DevicePreviews
 import com.scrolless.app.feature.home.R
 import kotlinx.coroutines.delay
@@ -130,32 +131,32 @@ private fun AccessibilitySuccessContent(onDismiss: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-                .padding(top = 16.dp, bottom = 24.dp),
+                .padding(horizontal = MaterialTheme.spacing.large)
+                .padding(top = MaterialTheme.spacing.large, bottom = MaterialTheme.spacing.extraLarge),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Spacer for floating icon positioning
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.huge + MaterialTheme.spacing.large))
 
             // Content Card (positioned below the floating icon)
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp)
-                    .padding(top = 36.dp), // Extra padding for icon overlap
+                    .padding(MaterialTheme.spacing.extraLarge)
+                    .padding(top = MaterialTheme.spacing.huge + MaterialTheme.spacing.extraSmall), // clears the icon
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // Title
                 Text(
                     text = stringResource(R.string.accessibility_success_title),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center,
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
                 // Description
                 Text(
@@ -165,7 +166,7 @@ private fun AccessibilitySuccessContent(onDismiss: () -> Unit) {
                     textAlign = TextAlign.Center,
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
                 // Next Steps Card
                 ScrollessCard(
@@ -176,16 +177,16 @@ private fun AccessibilitySuccessContent(onDismiss: () -> Unit) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(4.dp),
+                            .padding(MaterialTheme.spacing.extraSmall),
                     ) {
                         Text(
                             text = stringResource(R.string.next_steps_title),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
                         // Step 1
                         NextStep(
@@ -194,7 +195,7 @@ private fun AccessibilitySuccessContent(onDismiss: () -> Unit) {
                             delay = 200L,
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
                         // Step 2
                         NextStep(
@@ -206,7 +207,7 @@ private fun AccessibilitySuccessContent(onDismiss: () -> Unit) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.extraLarge))
 
             // Get Started Button with animation
             AnimatedButton(
@@ -283,11 +284,11 @@ private fun NextStep(stepNumber: String, text: String, delay: Long) {
                     text = stepNumber,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(MaterialTheme.spacing.large))
 
             // Step Text
             Text(

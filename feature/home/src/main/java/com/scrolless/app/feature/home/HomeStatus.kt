@@ -17,6 +17,8 @@
 package com.scrolless.app.feature.home
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -31,8 +33,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -46,6 +51,7 @@ import com.scrolless.app.designsystem.theme.spacing
 import com.scrolless.app.designsystem.theme.usageStatusFor
 import com.scrolless.app.designsystem.util.formatTime
 import com.scrolless.app.designsystem.util.toCountdownLabel
+import kotlinx.coroutines.isActive
 
 /**
  * The single question the home screen exists to answer: *what is happening right now?*
@@ -225,6 +231,31 @@ internal fun HomeStatusHeadline(
     val dotColor = tint?.indicatorColor ?: MaterialTheme.colorScheme.outline
     val supportText = supportParts.joinToString(separator = "  ·  ")
 
+    // A slow breath while Scrolless is on duty: enough to read as "live", far from a blink.
+    // States where nothing is being enforced deliberately stay still.
+    val isOnDuty = when (state) {
+        HomeBlockingState.BLOCKING_ALL,
+        HomeBlockingState.WITHIN_LIMIT,
+        HomeBlockingState.LIMIT_REACHED,
+        -> true
+
+        HomeBlockingState.NO_GOAL,
+        HomeBlockingState.LIMIT_UNCONFIGURED,
+        HomeBlockingState.PAUSED,
+        -> false
+    }
+    val dotBreath = remember { Animatable(1f) }
+    LaunchedEffect(isOnDuty) {
+        if (!isOnDuty) {
+            dotBreath.snapTo(1f)
+            return@LaunchedEffect
+        }
+        while (isActive) {
+            dotBreath.animateTo(targetValue = 0.55f, animationSpec = tween(durationMillis = 2400, easing = FastOutSlowInEasing))
+            dotBreath.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = 2400, easing = FastOutSlowInEasing))
+        }
+    }
+
     Column(
         modifier = modifier.clearAndSetSemantics {
             contentDescription = if (supportText.isEmpty()) title else "$title. $supportText"
@@ -239,6 +270,12 @@ internal fun HomeStatusHeadline(
             Box(
                 modifier = Modifier
                     .size(10.dp)
+                    .graphicsLayer {
+                        alpha = dotBreath.value
+                        val breathScale = 1f + (1f - dotBreath.value) * 0.25f
+                        scaleX = breathScale
+                        scaleY = breathScale
+                    }
                     .background(color = dotColor, shape = CircleShape),
             )
             AnimatedContent(

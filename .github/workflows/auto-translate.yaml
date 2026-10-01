@@ -50,5 +50,5 @@ jobs:
           title: "[Translate Bot] Auto-generated translations for non-English languages"
           body-path: ${{ runner.temp }}/translation_report.md
           labels: "translation, automated pr"
-          assignees: "duartebarbosadev"
-          reviewers: "duartebarbosadev"
+          assignees: "Xeven777"
+          reviewers: "Xeven777"

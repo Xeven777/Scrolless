@@ -54,6 +54,7 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import com.scrolless.app.core.model.BlockOption
 import com.scrolless.app.core.model.SessionSegment
+import com.scrolless.app.designsystem.component.staggeredEntrance
 import com.scrolless.app.designsystem.layout.ContentMaxWidth
 import com.scrolless.app.designsystem.theme.spacing
 import com.scrolless.app.feature.home.components.InlineUsageAnalyticsPanel
@@ -174,10 +175,12 @@ internal fun HomeContent(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
+                        .verticalScroll(rememberScrollState())
+                        .padding(bottom = MaterialTheme.spacing.huge),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     UsageOverviewHeader(
+                        modifier = Modifier.staggeredEntrance(index = 0),
                         uiState = uiState,
                         analytics = analytics,
                         blockingState = blockingState,
@@ -194,7 +197,9 @@ internal fun HomeContent(
                     Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .staggeredEntrance(index = 1),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         HomeControlsAndAnalytics(
@@ -267,7 +272,9 @@ private fun HomeWidePanes(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = MaterialTheme.spacing.huge)
+                .staggeredEntrance(index = 0),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             UsageOverviewHeader(
@@ -296,7 +303,9 @@ private fun HomeWidePanes(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = MaterialTheme.spacing.huge)
+                .staggeredEntrance(index = 1),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             HomeControlsAndAnalytics(

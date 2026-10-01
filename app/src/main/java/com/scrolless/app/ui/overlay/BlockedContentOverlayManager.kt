@@ -22,6 +22,7 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.view.Gravity
 import android.view.View
@@ -30,7 +31,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.ViewCompat
-import com.scrolless.app.designsystem.theme.timerOverlayBackgroundColor
+import com.scrolless.app.designsystem.theme.backgroundDark
+import com.scrolless.app.designsystem.theme.onSurfaceVariantDark
+import com.scrolless.app.designsystem.theme.primaryDark
 import javax.inject.Inject
 
 /**
@@ -136,16 +139,35 @@ class BlockedContentOverlayManager @Inject constructor() {
     private fun createCoverView(context: Context, cover: ContentCover): View = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER
-        val padding = (32 * resources.displayMetrics.density).toInt()
+        val density = resources.displayMetrics.density
+        val padding = (32 * density).toInt()
         setPadding(padding, padding, padding, padding)
-        // The timer color may be translucent. The blocker must be fully opaque to hide the video.
-        setBackgroundColor(timerOverlayBackgroundColor.toArgb() or 0xFF000000.toInt())
+        // The timer colour is translucent, but a blocker must stay fully opaque to hide the video.
+        // Using the app's own dark background instead of pure black means the interruption reads as
+        // a deliberate part of Scrolless rather than a hole punched in the screen.
+        setBackgroundColor(backgroundDark.toArgb() or 0xFF000000.toInt())
         // Consume taps and swipes rather than allowing them to reach the video beneath us.
         isClickable = true
+
+        // A short brand accent, echoing the status mark the app shows elsewhere.
+        addView(
+            View(context).apply {
+                layoutParams = LinearLayout.LayoutParams((28 * density).toInt(), (4 * density).toInt()).apply {
+                    bottomMargin = (20 * density).toInt()
+                }
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = 2f * density
+                    setColor(primaryDark.toArgb())
+                }
+            },
+        )
+
         addView(
             TextView(context).apply {
                 setText(cover.titleRes)
-                textSize = 24f
+                textSize = 22f
+                letterSpacing = -0.01f
                 typeface = Typeface.DEFAULT_BOLD
                 setTextColor(Color.WHITE)
                 gravity = Gravity.CENTER
@@ -155,10 +177,10 @@ class BlockedContentOverlayManager @Inject constructor() {
         addView(
             TextView(context).apply {
                 setText(cover.descriptionRes)
-                textSize = 16f
-                setTextColor(Color.WHITE)
+                textSize = 15f
+                setTextColor(onSurfaceVariantDark.toArgb())
                 gravity = Gravity.CENTER
-                setPadding(0, padding / 2, 0, 0)
+                setPadding(0, (12 * density).toInt(), 0, 0)
             },
         )
     }

@@ -66,10 +66,10 @@ fun Modifier.radialGradientScrim(
 ): Modifier {
     val transition = rememberInfiniteTransition(label = "GradientScrimPulse")
     val pulse by transition.animateFloat(
-        initialValue = 0.88f,
-        targetValue = 1.18f,
+        initialValue = 0.96f,
+        targetValue = 1.06f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 6500, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = 9000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "ScrimPulse",
@@ -78,7 +78,7 @@ fun Modifier.radialGradientScrim(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 12000, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = 20000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "ScrimTintShift",
@@ -90,8 +90,11 @@ fun Modifier.radialGradientScrim(
     } else {
         baseColor
     }
-    val baseAlpha = max(blendedBase.alpha, 0.38f)
-    val highlightMix = (0.85f - (clampedAccentStrength * 0.15f)).coerceIn(0.65f, 0.9f)
+    // A quiet ambient wash: enough to lift the surface off flat, never enough to compete
+    // with the content on top of it. Opacity is capped low and the holographic tint is
+    // only allowed to hint at the base hue instead of painting a rainbow behind the UI.
+    val baseAlpha = blendedBase.alpha.coerceIn(0.10f, 0.22f)
+    val highlightMix = (0.34f - (clampedAccentStrength * 0.10f)).coerceIn(0.18f, 0.40f)
 
     val holoPalette = listOf(
         holographicElectricSky,
@@ -101,7 +104,6 @@ fun Modifier.radialGradientScrim(
     ).map { color ->
         lerp(blendedBase, color, highlightMix).copy(alpha = baseAlpha)
     }
-
 
     val palette = if (accentColor != null) {
         val statusPalette = listOf(
@@ -120,9 +122,9 @@ fun Modifier.radialGradientScrim(
         palette = palette,
         fraction = 0.2f + (tintShift * 0.8f),
     )
-    val innerAlpha = (baseAlpha * (0.82f + pulse * 0.6f) * (0.85f + (clampedAccentStrength * 0.35f)))
-        .coerceAtMost(0.48f)
-    val midAlpha = (innerAlpha * 0.5f).coerceAtMost(0.28f)
+    val innerAlpha = (baseAlpha * pulse * (0.90f + (clampedAccentStrength * 0.25f)))
+        .coerceIn(0.08f, 0.24f)
+    val midAlpha = (innerAlpha * 0.45f).coerceAtMost(0.12f)
 
     val radialGradient = object : ShaderBrush() {
         override fun createShader(size: Size): Shader {
