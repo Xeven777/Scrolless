@@ -43,3 +43,4 @@ proguard-project.txt
 # Build / local files
 gradle/gradle-daemon-jvm.properties
 .worktrees/
+keystore.properties

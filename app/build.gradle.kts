@@ -29,6 +29,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -38,6 +39,14 @@ plugins {
     alias(libs.plugins.compose)
     alias(libs.plugins.kotlin.serialization)
 }
+
+// Written by the Release workflow from repo secrets; absent locally, so
+// `assembleRelease` just produces an unsigned APK.
+val keystoreProps =
+    Properties().apply {
+        val file = rootProject.file("keystore.properties")
+        if (file.exists()) file.inputStream().use { load(it) }
+    }
 
 android {
     compileSdk =
@@ -85,6 +94,15 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            if (keystoreProps.isNotEmpty()) {
+                signingConfig =
+                    signingConfigs.create("release") {
+                        storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+                        storePassword = keystoreProps.getProperty("storePassword")
+                        keyAlias = keystoreProps.getProperty("keyAlias")
+                        keyPassword = keystoreProps.getProperty("keyPassword")
+                    }
+            }
         }
     }
 
