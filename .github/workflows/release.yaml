@@ -57,19 +57,45 @@ jobs:
             printf 'keyPassword=%s\n' "$KEY_PASSWORD"
           } > keystore.properties
 
+      - name: Bump the version
+        id: bump
+        run: |
+          set -euo pipefail
+          file=app/build.gradle.kts
+          old_name=$(sed -nE 's/^[[:space:]]*versionName = "(.+)"$/\1/p' "$file")
+          old_code=$(sed -nE 's/^[[:space:]]*versionCode = ([0-9]+)$/\1/p' "$file")
+          new_code=$((old_code + 1))
+          # Bump the trailing number of the version name: 1.7.0 -> 1.7.1.
+          prefix=$(printf '%s' "$old_name" | sed -E 's/^(.*[^0-9])[0-9]+$/\1/')
+          last=$(printf '%s' "$old_name" | sed -E 's/.*[^0-9]([0-9]+)$/\1/')
+          new_name="$prefix$((last + 1))"
+          sed -i -E "s/^([[:space:]]*)versionName = \".*\"$/\1versionName = \"$new_name\"/" "$file"
+          sed -i -E "s/^([[:space:]]*)versionCode = [0-9]+$/\1versionCode = $new_code/" "$file"
+          echo "name=$new_name" >> "$GITHUB_OUTPUT"
+          echo "code=$new_code" >> "$GITHUB_OUTPUT"
+          echo "Bumping $old_name ($old_code) -> $new_name ($new_code)"
+
       - name: Assemble the release APK
         run: ./gradlew :app:assembleRelease
+
+      - name: Commit the version bump
+        # The release is already live, so a conflict here (someone pushed meanwhile) warns, it does not fail.
+        if: startsWith(github.ref, 'refs/heads/')
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/build.gradle.kts
+          git diff --cached --quiet && exit 0
+          git commit -m "Release ${{ steps.bump.outputs.name }} (versionCode ${{ steps.bump.outputs.code }})"
+          git push origin "HEAD:$GITHUB_REF"
 
       - name: Publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          version=$(sed -nE 's/^[[:space:]]*versionName = "(.+)"$/\1/p' app/build.gradle.kts)
-          if [ -z "$version" ]; then
-            echo "::error::could not read versionName from app/build.gradle.kts"
-            exit 1
-          fi
+          version='${{ steps.bump.outputs.name }}'
           tag="v$version"
           mv app/build/outputs/apk/release/app-release.apk "Scrolless-$version.apk"
           if gh release view "$tag" > /dev/null 2>&1; then

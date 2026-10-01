@@ -48,6 +48,8 @@ val keystoreProps =
         if (file.exists()) file.inputStream().use { load(it) }
     }
 
+    }
+
 android {
     compileSdk =
         libs.versions.compileSdk
@@ -97,7 +99,7 @@ android {
             if (keystoreProps.isNotEmpty()) {
                 signingConfig =
                     signingConfigs.create("release") {
-                        storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+                        storeFile = keystorePath("storeFile")
                         storePassword = keystoreProps.getProperty("storePassword")
                         keyAlias = keystoreProps.getProperty("keyAlias")
                         keyPassword = keystoreProps.getProperty("keyPassword")
