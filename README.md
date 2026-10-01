@@ -15,7 +15,7 @@
 
 <br>
 
-[**⬇️ Download**](#-download) · [**✨ Features**](#-features) · [**📸 Screenshots**](#-screenshots) · [**🛠️ Build**](#-building-from-source) · [**❓ FAQ**](#-faq) · [**🤝 Contributing**](#-contributing) · [**📄 License**](#-license)
+[**⬇️ Download**](#-download) · [**✨ Features**](#-features) · [**🛠️ Build**](#-building-from-source) · [**❓ FAQ**](#-faq) · [**🤝 Contributing**](#-contributing) · [**📄 License**](#-license)
 
 </div>
 
